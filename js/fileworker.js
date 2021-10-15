@@ -1481,8 +1481,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 				}
 				const MPFChannelID = (async () => {
 					// Send Each Part
-					const MPFChannelID_Lookup = FolderPairs.entries().filter(e => e[1].id === parameters.messageChannelID.toString()).map(e => e[1].parts)
-					if (MPFChannelID_Lookup.length > 0) {
+					let MPFChannelID_Lookup = null
+					FolderPairs.forEach(e => {
+						if (e.id === parameters.messageChannelID.toString()) { MPFChannelID_Lookup = e.parts }
+					})
+					if (MPFChannelID_Lookup) {
 						return MPFChannelID_Lookup.pop()
 					} else {
 						Logger.printLine("MPFGen", `No Parity Channel was mapped, Searching for Spanned File Storage Channel ID...`, "debug", parameters)

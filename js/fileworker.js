@@ -20,9 +20,6 @@ about release, "snippets", or to report spillage are to be directed to:
 docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 ====================================================================================== */
 
-import fs from "fs";
-import path from "path";
-
 (async () => {
 	let systemglobal = require('../config.json');
 	const facilityName = 'FileWorker';

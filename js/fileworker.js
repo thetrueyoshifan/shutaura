@@ -1523,7 +1523,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
 						for (let i = 0; i < parts; i++) {
 							const sentParityPart = mqClient.publishData(parameters.sendTo, {
-								ItemID: `${itemID}-${key}`,
+								ItemID: `${itemID}-${i}`,
 								sendTo: parameters.sendTo,
 								messageReturn: false,
 								fromClient : `return.${facilityName}.${systemglobal.SystemName}`,

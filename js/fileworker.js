@@ -20,6 +20,9 @@ about release, "snippets", or to report spillage are to be directed to:
 docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 ====================================================================================== */
 
+import fs from "fs";
+import path from "path";
+
 (async () => {
 	let systemglobal = require('../config.json');
 	const facilityName = 'FileWorker';
@@ -537,16 +540,18 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 		init = true
 	}
 	// Support Functions
-	function deleteFile(file, ready){
-		fs.open(file, 'r+', function (err, fd) {
-			if (err && (err.code === 'EBUSY' || err.code === 'ENOENT')){
-				ready(false)
-			} else {
-				fs.close(fd, function() {
-					fs.unlink(file, function (err) {})
-					ready(true)
-				})
-			}
+	function deleteFile(file){
+		return new Promise(ready => {
+			fs.open(file, 'r+', function (err, fd) {
+				if (err && (err.code === 'EBUSY' || err.code === 'ENOENT')){
+					ready(false)
+				} else {
+					fs.close(fd, function() {
+						fs.unlink(file, function (err) {})
+						ready(true)
+					})
+				}
+			})
 		})
 	}
 	function createMissingLinks() {
@@ -682,15 +687,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 																child.on('close', function (code) {
 																	if (code.toString() === '0' && fileSize(outputfile) < '7.999') {
 																		const output = fs.readFileSync(outputfile, {encoding: 'base64'})
-																		deleteFile(outputfile, function (ready) {
-																			// Do Nothing
-																		})
+																		deleteFile(outputfile)
 																		fulfill(output);
 																	} else {
 																		mqClient.sendMessage("Post-Encoded video file was to large to be send! Will be a multipart file", "info")
-																		deleteFile(outputfile, function (ready) {
-																			// Do Nothing
-																		})
+																		deleteFile(outputfile)
 																		fulfill(null)
 																	}
 																});
@@ -752,15 +753,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 																child.on('close', function (code) {
 																	if (code === 0 && fileSize(outputfile) > 0.00001) {
 																		const output = fs.readFileSync(outputfile, {encoding: 'base64'})
-																		deleteFile(outputfile, function (ready) {
-																			// Do Nothing
-																		})
+																		deleteFile(outputfile)
 																		fulfill(output);
 																	} else {
 																		mqClient.sendMessage("Failed to generate preview image due to FFMPEG error!", "info")
-																		deleteFile(outputfile, function (ready) {
-																			// Do Nothing
-																		})
+																		deleteFile(outputfile)
 																		fulfill(null)
 																	}
 																});
@@ -856,15 +853,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 												child.on('close', function (code) {
 													if (code.toString() === '0' && fileSize(outputfile) < '7.999') {
 														const output = fs.readFileSync(outputfile, {encoding: 'base64'})
-														deleteFile(outputfile, function (ready) {
-															// Do Nothing
-														})
+														deleteFile(outputfile)
 														fulfill(output);
 													} else {
 														mqClient.sendMessage("Post-Encoded video file was to large to be send! Will be a multipart file", "info")
-														deleteFile(outputfile, function (ready) {
-															// Do Nothing
-														})
+														deleteFile(outputfile)
 														fulfill(null)
 													}
 												});
@@ -926,15 +919,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 												child.on('close', function (code) {
 													if (code === 0 && fileSize(outputfile) > 0.00001) {
 														const output = fs.readFileSync(outputfile, {encoding: 'base64'})
-														deleteFile(outputfile, function (ready) {
-															// Do Nothing
-														})
+														deleteFile(outputfile)
 														fulfill(output);
 													} else {
 														mqClient.sendMessage("Failed to generate preview image due to FFMPEG error!", "info")
-														deleteFile(outputfile, function (ready) {
-															// Do Nothing
-														})
+														deleteFile(outputfile)
 														fulfill(null)
 													}
 												});
@@ -1382,15 +1371,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 					child.on('close', function (code) {
 						if (code.toString() === '0' && fileSize(outputfile) < '7.999') {
 							const output = fs.readFileSync(outputfile, {encoding: 'base64'})
-							deleteFile(outputfile, function (ready) {
-								// Do Nothing
-							})
+							deleteFile(outputfile)
 							fulfill(output);
 						} else {
 							mqClient.sendMessage("Post-Encoded video file was to large to be send! Will be a multipart file", "info")
-							deleteFile(outputfile, function (ready) {
-								// Do Nothing
-							})
+							deleteFile(outputfile)
 							fulfill(null)
 						}
 					});
@@ -1420,15 +1405,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 					child.on('close', function (code) {
 						if (code === 0 && fileSize(outputfile) > 0.00001) {
 							const output = fs.readFileSync(outputfile, {encoding: 'base64'})
-							deleteFile(outputfile, function (ready) {
-								// Do Nothing
-							})
+							deleteFile(outputfile)
 							fulfill(output);
 						} else {
 							mqClient.sendMessage("Failed to generate preview image due to FFMPEG error!", "info")
-							deleteFile(outputfile, function (ready) {
-								// Do Nothing
-							})
+							deleteFile(outputfile)
 							fulfill(null)
 						}
 					});
@@ -1440,51 +1421,41 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 				const flesize = Math.ceil(fileSize(object.FilePath.toString()));
 				const txtMessage = parameters.messageText
 
-				function sendTxt() {
+				async function sendTxt() {
 					parameters.messageType = "stext";
 					parameters.messageText = `**🧩 File : ${filepartsid}**\n*🏷 Name: ${object.FileName.toString()} (${flesize.toFixed(2)} MB)*\n` + txtMessage
 					parameters.addButtons = ["ReqFile", "Pin", "RemoveFile", "Archive", "MoveMessage"]
-					mqClient.sendData(parameters.sendTo, parameters, function (callback) {
-						if (callback) {
-							Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-							if (object.Type.toString() === "Local") {
-								deleteFile(object.FilePath.toString(), function (ready) {
-									if (ready === false) {
-										Logger.printLine("DeleteFile", `Failed to delete ${object.FilePath.toString()}`, "warn")
-									}
-								})
-							}
-							cb(true)
-						} else {
-							Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
-							cb(false)
+					if (await mqClient.publishData(parameters.sendTo, parameters)) {
+						Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
+						if (object.Type.toString() === "Local") {
+							if (!deleteFile(object.FilePath.toString()))
+								Logger.printLine("DeleteFile", `Failed to delete ${object.FilePath.toString()}`, "warn")
 						}
-					});
+						cb(true)
+					} else {
+						Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
+						cb(false)
+					}
 				}
-				function sendPreview(b64Data, previewSuffix) {
+				async function sendPreview(b64Data, previewSuffix) {
 					parameters.messageType = "sfile";
 					parameters.messageText = `**🧩 File : ${filepartsid}**\n*🏷 Name: ${object.FileName.toString()} (${flesize.toFixed(2)} MB)*\n` + txtMessage;
 					parameters.addButtons = ["ReqFile", "Pin", "RemoveFile", "Archive", "MoveMessage"];
 					parameters.itemFileData = '' + b64Data;
 					parameters.itemFileName = filepartsid + previewSuffix;
-					mqClient.sendData(parameters.sendTo, parameters, function (callback) {
-						if (callback) {
-							Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-							if (object.Type.toString() === "Local") {
-								deleteFile(object.FilePath.toString(), function (ready) {
-									if (ready === false) {
-										Logger.printLine("DeleteFile", `Failed to delete ${object.FilePath.toString()}`, "warn")
-									}
-								})
-							}
-							cb(true);
-						} else {
-							Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error");
-							cb(false);
+					if (await mqClient.publishData(parameters.sendTo, parameters)) {
+						Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
+						if (object.Type.toString() === "Local") {
+							if (!deleteFile(object.FilePath.toString()))
+								Logger.printLine("DeleteFile", `Failed to delete ${object.FilePath.toString()}`, "warn")
 						}
-					});
+						cb(true)
+					} else {
+						Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
+						cb(false)
+					}
 				}
-				function sendMultiPreview(b64Data, b64Preview, videoSuffix, previewSuffix) {
+				async function sendMultiPreview(b64Data, b64Preview, videoSuffix, previewSuffix) {
 					parameters.messageType = "smultifile";
 					parameters.messageText = `**🧩 File : ${filepartsid}**\n*🏷 Name: ${object.FileName.toString()} (${flesize.toFixed(2)} MB)*\n` + txtMessage
 					parameters.addButtons = ["ReqFile", "Pin", "RemoveFile", "Archive", "MoveMessage"]
@@ -1499,99 +1470,95 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 						}
 					];
 					delete parameters.itemFileName
-					mqClient.sendData(parameters.sendTo, parameters, function (callback) {
-						if (callback) {
-							Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-							if (object.Type.toString() === "Local") {
-								deleteFile(object.FilePath.toString(), function (ready) {
-									if (ready === false) {
-										Logger.printLine("DeleteFile", `Failed to delete ${object.FilePath.toString()}`, "warn")
-									}
-								})
-							}
-							cb(true)
-						} else {
-							Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
-							cb(false)
+					if (await mqClient.publishData(parameters.sendTo, parameters)) {
+						Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
+						if (object.Type.toString() === "Local") {
+							if (!deleteFile(object.FilePath.toString()))
+								Logger.printLine("DeleteFile", `Failed to delete ${object.FilePath.toString()}`, "warn")
 						}
-					});
-				}
-				function postSplit(names) {
-					Logger.printLine("MPFGen", `Completed splitting file "${filepartsid}" into ${names.length} parts`, "info")
-					// Send Each Part
-					let MPFChannelID_Lookup = undefined
-					FolderPairs.forEach(e => { if (e.id === parameters.messageChannelID.toString()) { MPFChannelID_Lookup = e.parts } })
-					if (MPFChannelID_Lookup) {
-						postSplitParser(MPFChannelID_Lookup, names);
+						cb(true)
 					} else {
-						Logger.printLine("MPFGen", `No Parity Channel was mapped, Searching for Spanned File Storage Channel ID...`, "debug", parameters)
-						db.safe(`SELECT discord_servers.chid_filedata FROM kanmi_channels, discord_servers WHERE kanmi_channels.channelid = ? AND kanmi_channels.serverid = discord_servers.serverid`, [parameters.messageChannelID], (err, serverdata) => {
-							if (err) {
-								if (FolderPairs.has("Data")) {
-									mqClient.sendMessage(`SQL Error occurred when finding the file parts channel for ${parameters.messageChannelID}, Using default channel`, "err", "SQL", err);
-									postSplitParser(FolderPairs.get("Data").parts, names);
-								} else {
-									mqClient.sendMessage(`SQL Error occurred when finding the file parts channel for ${parameters.messageChannelID}, Ticket will be dropped!`, "err", "SQL", err);
-									cb(true);
-								}
-							} else if (serverdata.length > 0) {
-								Logger.printLine("MPFGen", `Unmapped Channel, Using ${serverdata[0].chid_filedata} for Spanned File Storage`, "debug", parameters)
-								postSplitParser(serverdata[0].chid_filedata, names);
-							} else {
-								if (FolderPairs.has("Data")) {
-									mqClient.sendMessage(`Unable to find the file parts channel for ${parameters.messageChannelID}, Using default channel`, "err", "MPFGen");
-									postSplitParser(FolderPairs.get("Data").parts, names);
-								} else {
-									mqClient.sendMessage(`Unable to find the file parts channel for ${parameters.messageChannelID}, Ticket will be dropped!`, "err", "MPFGen");
-									cb(true);
-								}
-							}
-						})
+						Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
+						cb(false)
 					}
 				}
-				function postSplitParser(MPFChannelID, names) {
-					let sentParts = 0;
-					parameters.fileData = {
-						name: object.FileName.toString().trim().replace(/[/\\?%*:|"<> ]/g, '_'),
-						uuid: filepartsid,
-						size: flesize.toFixed(2),
-						total: names.length
-					};
+				const MPFChannelID = (async () => {
+					// Send Each Part
+					const MPFChannelID_Lookup = FolderPairs.filter(e => e.id === parameters.messageChannelID.toString()).map(e => e.parts)
+					if (MPFChannelID_Lookup.length > 0) {
+						return MPFChannelID_Lookup.pop()
+					} else {
+						Logger.printLine("MPFGen", `No Parity Channel was mapped, Searching for Spanned File Storage Channel ID...`, "debug", parameters)
+						const serverdata = await db.query(`SELECT discord_servers.chid_filedata FROM kanmi_channels, discord_servers WHERE kanmi_channels.channelid = ? AND kanmi_channels.serverid = discord_servers.serverid`, [parameters.messageChannelID])
+						if (serverdata.error) {
+							if (FolderPairs.has("Data")) {
+								mqClient.sendMessage(`SQL Error occurred when finding the file parts channel for ${parameters.messageChannelID}, Using default channel`, "err", "SQL", serverdata.error);
+								return FolderPairs.get("Data").parts
+							} else {
+								mqClient.sendMessage(`SQL Error occurred when finding the file parts channel for ${parameters.messageChannelID}, Ticket will be dropped!`, "err", "SQL", serverdata.error);
+								return false
+							}
+						} else if (serverdata.rows.length > 0) {
+							Logger.printLine("MPFGen", `Unmapped Channel, Using ${serverdata.rows.pop().chid_filedata} for Spanned File Storage`, "debug", parameters)
+							return serverdata.rows.pop().chid_filedata
+						} else if (FolderPairs.has("Data")) {
+							mqClient.sendMessage(`Unable to find the file parts channel for ${parameters.messageChannelID}, Using default channel`, "err", "MPFGen");
+							return FolderPairs.get("Data").parts
+						} else {
+							mqClient.sendMessage(`Unable to find the file parts channel for ${parameters.messageChannelID}, Ticket will be dropped!`, "err", "MPFGen");
+							return false
+						}
+					}
+				})()
 
-					let requests = names.reduce((promiseChain, partpath, key) => {
-						return promiseChain.then(() => new Promise((resolve) => {
-							const partBase64String = fs.readFileSync(partpath, {encoding: 'base64'})
-							mqClient.sendData(parameters.sendTo, {
+				if (!MPFChannelID) {
+					cb(true);
+				} else {
+					Logger.printLine("MPFGen", `Starting to split file "${object.FilePath.toString()}" as "${filepartsid}"...`, "info")
+					try {
+						let sentParts = 0;
+						const stat = fs.statSync(object.FilePath.toString())
+						const totalSize = stat.size;
+						const parts = Math.ceil(totalSize / 7500000);
+
+						for (let i = 0; i < parts; i++) {
+							const sentParityPart = mqClient.publishData(parameters.sendTo, {
 								ItemID: `${itemID}-${key}`,
 								sendTo: parameters.sendTo,
 								messageReturn: false,
 								fromClient : `return.${facilityName}.${systemglobal.SystemName}`,
 								fileUUID: filepartsid,
-								filePartN: key,
-								filePartTotal: names.length,
+								filePartN: i,
+								filePartTotal: parts,
 								messageType: "sfile",
 								messageChannelID: MPFChannelID,
-								messageText: `🧩 ID: ${filepartsid}\n🏷 Name: ${object.FileName.toString().trim().replace(/[/\\?%*:|"<> ]/g, '_')}\n📦 Part: ${key}/${names.length}`,
-								itemFileName: path.basename(partpath).split("?")[0],
-								itemFileData: '' + partBase64String
-							}, async (ok) => {
-								if (ok) {
-									Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-									fs.unlinkSync(partpath)
-									sentParts++
-									resolve();
-								} else {
-									Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
-									resolve();
-								}
-							});
-						}))
-					}, Promise.resolve());
-					requests.then(() => {
-						if (sentParts !== names.length) {
-							mqClient.sendMessage(`Error occurred when getting split file "${object.FilePath.toString()}" for transport - Not all parts were uploaded (${sentParts} !== ${names.length})! Retry...`, "err", "MPFGen")
+								messageText: `🧩 ID: ${filepartsid}\n🏷 Name: ${object.FileName.toString().trim().replace(/[/\\?%*:|"<> ]/g, '_')}\n📦 Part: ${i}/${parts.length}`,
+								itemFileName: `JFS_${filepartsid}.PSF-${i}`,
+								itemFileData: '' + fs.readFileSync(object.FilePath.toString(), {
+									encoding: 'base64',
+									start: i * 7500000,
+									end: ((parts -1 === i) ? 7500000 : (i * (2 * 7500000))),
+								})
+							})
+							if (sentParityPart) {
+								Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
+								sentParts++
+							} else {
+								Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
+							}
+						}
+						Logger.printLine("MPFGen", `Completed splitting file "${filepartsid}" into ${parts} parts`, "info")
+
+						parameters.fileData = {
+							name: object.FileName.toString().trim().replace(/[/\\?%*:|"<> ]/g, '_'),
+							uuid: filepartsid,
+							size: flesize.toFixed(2),
+							total: parts
+						};
+						if (sentParts !== parts) {
+							mqClient.sendMessage(`Error occurred when getting split file "${object.FilePath.toString()}" for transport - Not all parts were uploaded (${sentParts} !== ${parts})! Retry...`, "err", "MPFGen")
 							cb(false)
-						} else if (systemglobal.FW_Accepted_Images.indexOf(path.extname(object.FileName.toString()).split(".").pop().toLowerCase()) !== -1) {
+						} else if (systemglobal.FW_Accepted_Images.indexOf(object.FileName.toString().split(".").pop().toLowerCase()) !== -1) {
 							getImageData(object.FilePath.toString(), function (_date) {
 								if (_date) {
 									parameters.itemDateTime = _date;
@@ -1608,7 +1575,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 									}
 								})
 							})
-						} else if (systemglobal.FW_Accepted_Videos.indexOf(path.extname(object.FileName.toString()).split(".").pop().toLowerCase()) !== -1) {
+						} else if (systemglobal.FW_Accepted_Videos.indexOf(object.FileName.toString().split(".").pop().toLowerCase()) !== -1) {
 							previewVideo(object.FilePath.toString())
 								.then((imageFulfill) => {
 									if (imageFulfill != null ) {
@@ -1659,61 +1626,8 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 						} else {
 							sendTxt()
 						}
-					})
-				}
-
-				if (systemglobal.UseJSSplit) {
-					Logger.printLine("MPFGen", `Starting to split file "${object.FilePath.toString()}" as "${filepartsid}"...`, "info")
-					splitFile.splitFileBySize(object.FilePath.toString(), 7500000)
-						.then((names) => { postSplit(names) })
-						.catch((err) => {
-							mqClient.sendMessage(`Error occurred when splitting the "${object.FilePath.toString()}" for transport, Ticket will be dropped!`, "err", "MPFGen", err)
-							cb(true);
-						});
-				} else {
-					Logger.printLine("MPFGen-Native", `Starting to split file "${object.FilePath.toString()}" as "${filepartsid}"...`, "info")
-
-					try {
-						const FileBase = path.resolve(path.dirname(object.FilePath.toString()))
-						const FileName = path.basename(object.FilePath.toString())
-						const nativeSplit = spawn("split", ["-b", "7500K", "--verbose", `${FileName}`, `JFS_${filepartsid}.PSF-`], { cwd: FileBase });
-
-						nativeSplit.stderr.on("data", data => {
-							Logger.printLine("MPFGen-Native", `${data}`, "error")
-						});
-
-						nativeSplit.on('error', (err) => {
-							mqClient.sendMessage(`Error occurred when splitting the "${object.FilePath.toString()}" for transport - "${err.message}", Ticket will be dropped!`, "err", "MPFGen", err)
-							cb(true);
-						});
-
-						nativeSplit.on("close", code => {
-							if (code === 0) {
-								fs.readdir(FileBase, function (err, files) {
-									//handling error
-									if (err) {
-										mqClient.sendMessage(`Error occurred when getting split files "${object.FilePath.toString()}" for transport - ${err.message}, Ticket will be dropped!`, "err", "MPFGen", err)
-										cb(true);
-									} else if (files.length > 0) {
-										const nativeParts = files.filter(e => e.startsWith(`JFS_${filepartsid}.PSF-`));
-										if (nativeParts.length > 0) {
-											setTimeout(() => {
-												postSplit(nativeParts.map(e => path.join(FileBase, e)))
-											}, 2000);
-										} else {
-											mqClient.sendMessage(`Error occurred when splitting the "${object.FilePath.toString()}" for transport - No parity parts generated, Ticket will be dropped!`, "err", "MPFGen", err)
-											cb(true);
-										}
-									}
-								});
-							} else {
-								mqClient.sendMessage(`Error occurred when splitting the "${object.FilePath.toString()}" for transport - Stop Code ${code}, Ticket will be dropped!`, "err", "MPFGen", err)
-								cb(true);
-							}
-						});
 					} catch (err) {
-						Logger.printLine("JobParser", "Error Parsing Local Job - " + err.message, "critical")
-						console.error(err);
+						mqClient.sendMessage(`Error occurred when splitting the "${object.FilePath.toString()}" for transport, Ticket will be dropped!`, "err", "MPFGen", err)
 						cb(true);
 					}
 				}
@@ -1743,9 +1657,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 											if (callback) {
 												Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
 												if (object.Type.toString() === "Remote") {
-													deleteFile(object.FilePath.toString(), function (ready) {
-														// Do Nothing
-													})
+													deleteFile(object.FilePath.toString())
 												}
 											} else {
 												Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
@@ -1778,9 +1690,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 								mqClient.sendData(parameters.sendTo, parameters, function (callback) {
 									if (callback) {
 										Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-										if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString(), function (ready) {
-											// Do Nothing
-										}) }
+										if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString()) }
 										cb(true)
 									} else {
 										Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
@@ -1851,9 +1761,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 								mqClient.sendData(parameters.sendTo, parameters, function (callback) {
 									if (callback) {
 										Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-										if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString(), function (ready) {
-											// Do Nothing
-										}) }
+										if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString()) }
 										cb(true)
 									} else {
 										Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
@@ -1872,9 +1780,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 										mqClient.sendData(parameters.sendTo, parameters, function (callback) {
 											if (callback) {
 												Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-												if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString(), function (ready) {
-													// Do Nothing
-												}) }
+												if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString()) }
 												cb(true)
 											} else {
 												Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
@@ -1889,9 +1795,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 										mqClient.sendData(parameters.sendTo, parameters, function (callback) {
 											if (callback) {
 												Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-												if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString(), function (ready) {
-													// Do Nothing
-												}) }
+												if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString()) }
 												cb(true)
 											} else {
 												Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
@@ -1908,9 +1812,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 									mqClient.sendData(parameters.sendTo, parameters, function (callback) {
 										if (callback) {
 											Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-											if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString(), function (ready) {
-												// Do Nothing
-											}) }
+											if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString()) }
 											cb(true)
 										} else {
 											Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
@@ -1926,9 +1828,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 							mqClient.sendData(parameters.sendTo, parameters, function (callback) {
 								if (callback) {
 									Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-									if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString(), function (ready) {
-										// Do Nothing
-									}) }
+									if (object.Type.toString() === "Remote") { deleteFile(object.FilePath.toString()) }
 									cb(true)
 								} else {
 									Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
@@ -1944,7 +1844,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 			console.error(err);
 			cb(true);
 		}
-
 	}
 	start()
 

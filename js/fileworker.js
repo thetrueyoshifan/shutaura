@@ -1628,6 +1628,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 						}
 					} catch (err) {
 						mqClient.sendMessage(`Error occurred when splitting the "${object.FilePath.toString()}" for transport, Ticket will be dropped!`, "err", "MPFGen", err)
+						console.error(err)
 						cb(true);
 					}
 				}

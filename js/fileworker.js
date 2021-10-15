@@ -1413,7 +1413,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 				})
 			}
 			// Generate a MultiPart File
-			function sendMultiPartFile(cb) {
+			async function sendMultiPartFile(cb) {
 				const filepartsid = crypto.randomBytes(16).toString("hex");
 				const flesize = Math.ceil(fileSize(object.FilePath.toString()));
 				const txtMessage = parameters.messageText
@@ -1521,31 +1521,45 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 						const totalSize = stat.size;
 						const parts = Math.ceil(totalSize / 7500000);
 
+
 						for (let i = 0; i < parts; i++) {
-							const sentParityPart = mqClient.publishData(parameters.sendTo, {
-								ItemID: `${itemID}-${i}`,
-								sendTo: parameters.sendTo,
-								messageReturn: false,
-								fromClient : `return.${facilityName}.${systemglobal.SystemName}`,
-								fileUUID: filepartsid,
-								filePartN: i,
-								filePartTotal: parts,
-								messageType: "sfile",
-								messageChannelID: MPFChannelID,
-								messageText: `🧩 ID: ${filepartsid}\n🏷 Name: ${object.FileName.toString().trim().replace(/[/\\?%*:|"<> ]/g, '_')}\n📦 Part: ${i}/${parts.length}`,
-								itemFileName: `JFS_${filepartsid}.PSF-${i}`,
-								itemFileData: '' + fs.readFileSync(object.FilePath.toString(), {
+							await new Promise(resolve => {
+								let fileData = ''
+								const stream = fs.createReadStream(object.FilePath.toString(), {
 									encoding: 'base64',
 									start: i * 7500000,
-									end: ((parts -1 === i) ? 7500000 : (i * (2 * 7500000))),
-								})
+									end: ((parts - 1 === i) ? 7500000 : (i * (2 * 7500000))),
+								});
+								stream.on('data', buffer => { fileData += buffer });
+								stream.on('end', () => {
+									const sentParityPart = mqClient.publishData(parameters.sendTo, {
+										ItemID: `${itemID}-${i}`,
+										sendTo: parameters.sendTo,
+										messageReturn: false,
+										fromClient : `return.${facilityName}.${systemglobal.SystemName}`,
+										fileUUID: filepartsid,
+										filePartN: i,
+										filePartTotal: parts,
+										messageType: "sfile",
+										messageChannelID: MPFChannelID,
+										messageText: `🧩 ID: ${filepartsid}\n🏷 Name: ${object.FileName.toString().trim().replace(/[/\\?%*:|"<> ]/g, '_')}\n📦 Part: ${i}/${parts.length}`,
+										itemFileName: `JFS_${filepartsid}.PSF-${i}`,
+										itemFileData: '' + fileData
+									})
+									fileData = null
+									if (sentParityPart) {
+										Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
+										sentParts++
+									} else {
+										Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
+									}
+									resolve();
+								});
+								stream.on("error", (err) => {
+									Logger.printLine("MPFGen", `Failed to parse file part - ${err.message}`, "error")
+									resolve();
+								});
 							})
-							if (sentParityPart) {
-								Logger.printLine("KanmiMQ", `Sent to ${parameters.sendTo}`, "debug")
-								sentParts++
-							} else {
-								Logger.printLine("KanmiMQ", `Failed to send to ${parameters.sendTo}`, "error")
-							}
 						}
 						Logger.printLine("MPFGen", `Completed splitting file "${filepartsid}" into ${parts} parts`, "info")
 

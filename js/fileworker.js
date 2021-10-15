@@ -1481,7 +1481,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 				}
 				const MPFChannelID = (async () => {
 					// Send Each Part
-					const MPFChannelID_Lookup = FolderPairs.filter(e => e.id === parameters.messageChannelID.toString()).map(e => e.parts)
+					const MPFChannelID_Lookup = FolderPairs.entries.filter(e => e[1].id === parameters.messageChannelID.toString()).map(e => e[1].parts)
 					if (MPFChannelID_Lookup.length > 0) {
 						return MPFChannelID_Lookup.pop()
 					} else {

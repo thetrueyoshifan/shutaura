@@ -1486,7 +1486,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 						if (e.id === parameters.messageChannelID.toString()) { MPFChannelID_Lookup = e.parts }
 					})
 					if (MPFChannelID_Lookup) {
-						return MPFChannelID_Lookup.pop()
+						return MPFChannelID_Lookup
 					} else {
 						Logger.printLine("MPFGen", `No Parity Channel was mapped, Searching for Spanned File Storage Channel ID...`, "debug", parameters)
 						const serverdata = await db.query(`SELECT discord_servers.chid_filedata FROM kanmi_channels, discord_servers WHERE kanmi_channels.channelid = ? AND kanmi_channels.serverid = discord_servers.serverid`, [parameters.messageChannelID])

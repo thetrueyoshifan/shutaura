@@ -2201,9 +2201,21 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             return generateADSImage(imageBuffer, width, height, opts);
         } else {
             console.log(crop)
-            return await sharp(imageBuffer)
-                .png()
-                .toBuffer();
+            if (crop) {
+                return await sharp(imageBuffer)
+                    .png()
+                    .toBuffer();
+            } else {
+                return await sharp(imageBuffer)
+                    .extract({
+                        width: crop.w,
+                        height: crop.h,
+                        left: crop.x,
+                        top: crop.y
+                    })
+                    .png()
+                    .toBuffer();
+            }
         }
     }
 

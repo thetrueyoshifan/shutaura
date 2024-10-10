@@ -8549,7 +8549,7 @@ This code is publicly released and is restricted by its project license
                         messageUpdate: {
                             ...sqlObject
                         },
-                        reCache: !(refrance && refrance.action && refrance.action === 'jfsMove') || refrance.reload_cdn
+                        reCache: (refrance && ((refrance.action && refrance.action !== 'jfsMove') || refrance.reload_cdn))
                     })
                 }
             } else {

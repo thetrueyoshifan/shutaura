@@ -2174,10 +2174,10 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             .resize({ backgroundWidth, backgroundHeight }) // Resize to cover the canvas dimensions
             .blur(10)
             .modulate({
-                brightness: (opts.dark) ? 0.8 : 1.2,
+                brightness: (opts && opts.tint && opt.tint.d && opt.tint.d === 1) ? 0.8 : 1.2,
                 saturate: 2
             })
-            .normalise((opts.dark) ? { lower: 30, upper: 100 } : 0.6)
+            .normalise((opts && opts.tint && opt.tint.d && opt.tint.d === 1) ? { lower: 20, upper: 100 } : 0.6)
             .toBuffer();
 
         // Load the blurred image into the canvas
@@ -2185,7 +2185,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         ctx.drawImage(blurredImage, offsetBgX, offsetBgY, backgroundWidth, backgroundHeight);
 
         if (opts && opts.tint) {
-            ctx.fillStyle = `rgba(${opts.tint.r}, ${opts.tint.g}, ${opts.tint.b}, 0.5)`;
+            ctx.fillStyle = `rgba(${opts.tint.r}, ${opts.tint.g}, ${opts.tint.b}, 0.6)`;
             ctx.fillRect(0, 0, width, height);
         }
 
@@ -2231,17 +2231,12 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
     app.get('/ads-gen/:data/:placeholder', async (req, res) => {
         let { width, height } = req.query;
-        let dark
         try {
             const data = JSON.parse(atob(decodeURIComponent(req.params.data)));
             if (data.h)
                 height = parseInt(data.h.toString());
             if (data.w)
                 width = parseInt(data.w.toString());
-            if (data.d)
-                dark = !!(data.d);
-            if (req.query.dark)
-                dark = (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes')
 
             // { t: s: c: f: u: e: h: a: o: { t:[] } h: w: }
             if (!data.t)
@@ -2255,7 +2250,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             let ref;
 
             if (data.t === 0) {
-                Logger.printLine("ReqGenerator", `[LocalFS] ${path.join(systemglobal.CDN_Base_Path, data.p, (data.m || data.f))} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info", data);
+                Logger.printLine("ReqGenerator", `[LocalFS] ${path.join(systemglobal.CDN_Base_Path, data.p, (data.m || data.f))} : ${width}x${height}`, "info", data);
                 if (data.m && fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'master', data.p, data.m))) {
                     buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'master', data.p, data.m));
                     if (data.f && fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'full', data.p, data.f)))
@@ -2267,7 +2262,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 }
             } else if (data.t === 1) {
                 const path = `${data.c}/${data.p}/${data.n}`;
-                Logger.printLine("ReqGenerator", `[CloudFS] ${path} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info", data);
+                Logger.printLine("ReqGenerator", `[CloudFS] ${path} : ${width}x${height}`, "info", data);
                 if (!data.a)
                     Logger.printLine("ReqGenerator", `[CloudFS] Missing Discord Attachment Authentication Value, Will have to request it...`, "warning");
                 buffer = await downloadImage(`https://cdn.discordapp.com/attachments/${path}${(data.a) ? '?' + data.a : ''}`);
@@ -2280,7 +2275,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
                 crop: crop.rows,
                 ref,
-                dark,
                 ...data.o
             });
             if (imageBuffer) {

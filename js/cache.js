@@ -2185,7 +2185,13 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         ctx.drawImage(blurredImage, offsetBgX, offsetBgY, backgroundWidth, backgroundHeight);
 
         if (opts && opts.tint) {
-            ctx.fillStyle = `rgba(${opts.tint.r}, ${opts.tint.g}, ${opts.tint.b}, 0.6)`;
+            const increaseSaturation = (color) => Math.min(Math.floor(color * 1.25), 255);
+
+            const r = increaseSaturation(opts.tint.r);
+            const g = increaseSaturation(opts.tint.g);
+            const b = increaseSaturation(opts.tint.b);
+
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
             ctx.fillRect(0, 0, width, height);
         }
 
@@ -2285,64 +2291,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             } else {
                 res.status(500).send('Error generating image');
             }
-        } catch (error) {
-            Logger.printLine("ReqGenerator", `Error During Generation: ${error.message}`, "error");
-            res.status(500).send('Error generating image');
-        }
-    });
-    app.get('/ads-gen/local/:user/:eid/:server/:channel/:file', async (req, res) => {
-        const { width, height } = req.query;
-        try {
-            Logger.printLine("ReqGenerator", `${path.join(systemglobal.CDN_Base_Path, req.params.server,req.params.channel,req.params.file)} : ${width}x${height} ${(req.query && req.query.dark === 'true') ? "(Dark)" : ""}`, "info");
-            if (!width || !height)
-                return res.status(400).send("Missing height or width parameter");
-            if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].indexOf(req.params.file.split('.').pop().toLowerCase()) === -1)
-                return res.status(400).send("Unsupported File Format");
-            let buffer;
-            let ref_buffer;
-            if (fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'master', req.params.server,req.params.channel,req.params.file))) {
-                buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'master', req.params.server,req.params.channel,req.params.file));
-                if (fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'full', req.params.server,req.params.channel,req.params.file)))
-                    ref_buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'full', req.params.server,req.params.channel,req.params.file));
-            } else if (fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'full', req.params.server,req.params.channel,req.params.file))) {
-                buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'full', req.params.server,req.params.channel,req.params.file));
-            } else {
-                return res.status(404).end();
-            }
-            const crop = await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [req.params.user, req.params.eid]);
-            console.log(crop.rows);
-            const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
-                crop: crop.rows,
-                ref: ref_buffer,
-                dark: (req.query && req.query.dark && (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes'))
-            });
-            res.setHeader('Content-Type', 'image/png');
-            res.send(imageBuffer);
-        } catch (error) {
-            Logger.printLine("ReqGenerator", `Error During Generation: ${error.message}`, "error");
-            res.status(500).send('Error generating image');
-        }
-    });
-    app.get('/ads-gen/discord/:user/:eid/:channel/:hash/:file', async (req, res) => {
-        const { width, height } = req.query;
-        try {
-            Logger.printLine("ReqGenerator", `https://media.discordapp.net/attachments/${req.params.channel}/${req.params.hash}/${req.params.file} : ${width}x${height} ${(req.query && req.query.dark === 'true') ? "(Dark)" : ""}`, "info");
-            if (!width || !height)
-                return res.status(400).send("Missing height or width parameter");
-            if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].indexOf(req.params.file.split('.').pop().toLowerCase()) === -1)
-                return res.status(400).send("Unsupported File Format");
-            const discordAuth = Object.entries(req.query).filter(e => e[0] !== 'width' && e[0] !== 'height').map(e => e[0] + '=' + e[1]).join('&');
-            let downloadURL = `https://cdn.discordapp.com/attachments/${req.params.channel}/${req.params.hash}/${req.params.file}?${discordAuth}`
-            let buffer = await downloadImage(downloadURL);
-            if (!buffer)
-                return res.status(501).end();
-            const crop = await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [req.params.user, req.params.eid]);
-            const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
-                crop: crop.rows,
-                dark: (req.query && req.query.dark && (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes'))
-            });
-            res.setHeader('Content-Type', 'image/png');
-            res.send(imageBuffer);
         } catch (error) {
             Logger.printLine("ReqGenerator", `Error During Generation: ${error.message}`, "error");
             res.status(500).send('Error generating image');

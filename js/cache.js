@@ -2209,10 +2209,10 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 if (crop.r)
                     image.rotate(crop.r)
                 image.extract({
-                    width: crop.w * widthMultiplier,
-                    height: crop.h * heightMultiplier,
-                    left: crop.x * widthMultiplier,
-                    top: crop.y * heightMultiplier
+                    width: (crop.w * widthMultiplier).toFixed(0),
+                    height: (crop.h * heightMultiplier).toFixed(0),
+                    left: (crop.x * widthMultiplier).toFixed(0),
+                    top: (crop.y * heightMultiplier).toFixed(0),
                 });
                 return image.toBuffer();
             } else {

@@ -2106,6 +2106,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
     async function downloadImage(inputUrl) {
         return new Promise(async cb => {
             const url = await getDiscordURL(inputUrl);
+            console.log(url);
             request.get({
                 url,
                 headers: {

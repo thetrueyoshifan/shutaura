@@ -2185,7 +2185,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         ctx.drawImage(blurredImage, offsetBgX, offsetBgY, backgroundWidth, backgroundHeight);
 
         if (opts && opts.tint) {
-            const increaseSaturation = (color) => Math.min(Math.floor(color * 1.25), 255);
+            const increaseSaturation = (color) => Math.min(Math.floor(color * 1.5), 255);
 
             const r = increaseSaturation(opts.tint.r);
             const g = increaseSaturation(opts.tint.g);

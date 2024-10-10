@@ -434,15 +434,16 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         }
     }
 
-    async function getDiscordURL(url, eid) {
+    async function getDiscordURL(url, eid, force) {
+        console.log(url);
         if (!systemglobal.User_Discord_Key)
             return url;
         return new Promise(async ok => {
-            if (url.split('?').length > 1) {
+            if (!force && url.split('?').length > 1) {
                 const params = new URLSearchParams('?' + url.split('?')[1]);
                 if (params.get('ex') && params.get('is') && params.get('hm')) {
-                    const expires = moment(parseInt(params.get('ex') || '', 16) * 1000).subtract(8, 'hours');
-                    if (expires.valueOf() > Date.now()) {
+                    const expires = new Date(parseInt(params.get('ex') || '', 16) * 1000);
+                    if (expires.getTime() > Date.now()) {
                         ok(url);
                         return false;
                     }

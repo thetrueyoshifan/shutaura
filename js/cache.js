@@ -2200,12 +2200,12 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         if (!crop && ((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5)) {
             return generateADSImage(imageBuffer, width, height, opts);
         } else {
-            console.log(crop)
-            if (crop) {
+            if (!crop) {
                 return await sharp(imageBuffer)
                     .png()
                     .toBuffer();
             } else {
+                console.log(crop)
                 return await sharp(imageBuffer)
                     .extract({
                         width: crop.w,

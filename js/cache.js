@@ -2191,7 +2191,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             const g = increaseSaturation(opts.tint.g);
             const b = increaseSaturation(opts.tint.b);
 
-            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(opts && opts.tint && opts.tint.d) ? '0.25' : '0.55' })`;
             ctx.fillRect(0, 0, width, height);
         }
 

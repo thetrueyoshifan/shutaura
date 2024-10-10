@@ -2239,7 +2239,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 width = parseInt(data.w.toString());
 
             // { t: s: c: f: u: e: h: a: o: { t:[] } h: w: }
-            if (!data.t)
+            if (data.t === undefined)
                 return res.status(400).send("Missing storage type parameter");
             if (!width || !height)
                 return res.status(400).send("Missing height or width parameter");

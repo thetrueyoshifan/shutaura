@@ -2193,19 +2193,21 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         const image = await loadImage(imageBuffer);
         const imgRatio = image.width / image.height;
         const canvasRatio = width / height;
+        const crop = (opts && opts.crop && opts.crop.length > 0) ? opts.crop.filter(e => e.type === (canvasRatio => 1))[0] : undefined;
 
         Logger.printLine("ImageGenerator", `Canvas@${canvasRatio.toFixed(2)} Image@${imgRatio.toFixed(2)} with result of ${(canvasRatio - imgRatio).toFixed(4)}: ${((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5) ? "Generate" : "Direct"} Results`, "info");
 
-        if ((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5) {
+        if (!crop && ((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5)) {
             return generateADSImage(imageBuffer, width, height, opts);
         } else {
+            console.log(crop)
             return await sharp(imageBuffer)
                 .png()
                 .toBuffer();
         }
     }
 
-    app.get('/ads-gen/local/:server/:channel/:file', async (req, res) => {
+    app.get('/ads-gen/local/:user/:eid/:server/:channel/:file', async (req, res) => {
         const { width, height } = req.query;
         try {
             Logger.printLine("ReqGenerator", `${path.join(systemglobal.CDN_Base_Path, req.params.server,req.params.channel,req.params.file)} : ${width}x${height} ${(req.query && req.query.dark === 'true') ? "(Dark)" : ""}`, "info");
@@ -2221,7 +2223,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             } else {
                 return res.status(404).end();
             }
+            const crop = await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [req.params.user, req.params.eid]);
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
+                crop: crop.rows,
                 dark: (req.query && req.query.dark && (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes'))
             });
             res.setHeader('Content-Type', 'image/png');
@@ -2231,7 +2235,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             res.status(500).send('Error generating image');
         }
     });
-    app.get('/ads-gen/discord/:channel/:hash/:file', async (req, res) => {
+    app.get('/ads-gen/discord/:user/:eid/:channel/:hash/:file', async (req, res) => {
         const { width, height } = req.query;
         try {
             Logger.printLine("ReqGenerator", `https://media.discordapp.net/attachments/${req.params.channel}/${req.params.hash}/${req.params.file} : ${width}x${height} ${(req.query && req.query.dark === 'true') ? "(Dark)" : ""}`, "info");
@@ -2244,7 +2248,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             let buffer = await downloadImage(downloadURL);
             if (!buffer)
                 return res.status(501).end();
+            const crop = await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [req.params.user, req.params.eid]);
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
+                crop: crop.rows,
                 dark: (req.query && req.query.dark && (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes'))
             });
             res.setHeader('Content-Type', 'image/png');

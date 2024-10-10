@@ -2174,10 +2174,10 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             .resize({ backgroundWidth, backgroundHeight }) // Resize to cover the canvas dimensions
             .blur(10)
             .modulate({
-                brightness: (opts && opts.tint && opt.tint.d && opt.tint.d === 1) ? 0.8 : 1.2,
+                brightness: (opts && opts.tint && opts.tint.d) ? 0.8 : 1.2,
                 saturate: 2
             })
-            .normalise((opts && opts.tint && opt.tint.d && opt.tint.d === 1) ? { lower: 20, upper: 100 } : 0.6)
+            .normalise((opts && opts.tint && opts.tint.d) ? { lower: 20, upper: 100 } : 0.6)
             .toBuffer();
 
         // Load the blurred image into the canvas

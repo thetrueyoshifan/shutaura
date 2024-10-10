@@ -2193,7 +2193,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         const image = await loadImage(imageBuffer);
         const imgRatio = image.width / image.height;
         const canvasRatio = width / height;
-        const crop = (opts && opts.crop && opts.crop.length > 0) ? opts.crop.filter(e => e.type === (canvasRatio <= 1))[0] : undefined;
+        const crop = (opts && opts.crop && opts.crop.length > 0) ? opts.crop.filter(e => e.type === (canvasRatio <= 1) ? 1 : 0)[0] : undefined;
 
         Logger.printLine("ImageGenerator", `Canvas@${canvasRatio.toFixed(2)} Image@${imgRatio.toFixed(2)} with result of ${(canvasRatio - imgRatio).toFixed(4)}: ${((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5) ? "Generate" : "Direct"} Results`, "info");
 

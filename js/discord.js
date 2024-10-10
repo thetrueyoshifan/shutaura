@@ -7467,7 +7467,8 @@ This code is publicly released and is restricted by its project license
                                             await messageUpdate(data, {
                                                 channel: message.channel.id,
                                                 id: message.id,
-                                                action: 'jfsRotate'
+                                                action: 'jfsRotate',
+                                                reload_cdn: true,
                                             })
                                             resolve(true)
                                         })
@@ -8538,7 +8539,7 @@ This code is publicly released and is restricted by its project license
                 if (addedMessage.error) {
                     SendMessage("SQL Error occurred when saving to the message cache", "err", 'main', "SQL", addedMessage.error)
                 }
-                if ((((sqlObject.fileid && !systemglobal.Discord_No_CDN_Reload_Spanned) || (!sqlObject.fileid && !systemglobal.Discord_No_CDN_Reload)) || (refrance && refrance.reload_cdn))
+                if (((sqlObject.fileid && !systemglobal.Discord_No_CDN_Reload_Spanned) || (!sqlObject.fileid && !systemglobal.Discord_No_CDN_Reload) || (refrance && refrance.reload_cdn))
                     && (!systemglobal.CDN_Ignore_Channels || (systemglobal.CDN_Ignore_Channels && systemglobal.CDN_Ignore_Channels.indexOf(sqlObject.channel) === -1))
                     && (!systemglobal.CDN_Ignore_Servers || (systemglobal.CDN_Ignore_Channels && systemglobal.CDN_Ignore_Servers.indexOf(sqlObject.server) === -1))) {
                     mqClient.cdnRequest({

@@ -481,6 +481,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                     await db.query(`UPDATE kanmi_records SET attachment_auth = ?, attachment_auth_ex = ? WHERE channel = ? AND attachment_hash = ?`, [ah[1], ex, el[0], el[1]])
                 }
             } else {
+                console.log(json);
                 ok(false);
             }
             return false;

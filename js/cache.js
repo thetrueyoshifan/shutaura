@@ -2191,9 +2191,13 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
     }
     async function calculateImage(imageBuffer, width, height, opts) {
         const image = await loadImage(imageBuffer);
+        const ref_image = (opts && opts.ref) ? await loadImage(opts.ref) : undefined;
+        const widthMultiplier = (ref_image) ? (image.width / ref_image.width) : 1;
+        const heightMultiplier = (ref_image) ? (image.height / ref_image.height) : 1;
         const imgRatio = image.width / image.height;
         const canvasRatio = width / height;
         const crop = (opts && opts.crop && opts.crop.length > 0) ? opts.crop.filter(e => e.type === ((canvasRatio <= 1) ? 1 : 0))[0] : undefined;
+
 
         Logger.printLine("ImageGenerator", `Canvas@${canvasRatio.toFixed(2)} Image@${imgRatio.toFixed(2)} with result of ${(canvasRatio - imgRatio).toFixed(4)}: ${((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5) ? "Generate" : "Direct"} Results`, "info");
 
@@ -2205,10 +2209,10 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 if (crop.r)
                     image.rotate(crop.r)
                 image.extract({
-                    width: crop.w,
-                    height: crop.h,
-                    left: crop.x,
-                    top: crop.y
+                    width: crop.w * widthMultiplier,
+                    height: crop.h * heightMultiplier,
+                    left: crop.x * widthMultiplier,
+                    top: crop.y * heightMultiplier
                 });
                 return image.toBuffer();
             } else {
@@ -2226,8 +2230,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].indexOf(req.params.file.split('.').pop().toLowerCase()) === -1)
                 return res.status(400).send("Unsupported File Format");
             let buffer;
+            let ref_buffer;
             if (fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'master', req.params.server,req.params.channel,req.params.file))) {
                 buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'master', req.params.server,req.params.channel,req.params.file));
+                if (fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'full', req.params.server,req.params.channel,req.params.file)))
+                    ref_buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'full', req.params.server,req.params.channel,req.params.file));
             } else if (fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'full', req.params.server,req.params.channel,req.params.file))) {
                 buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'full', req.params.server,req.params.channel,req.params.file));
             } else {
@@ -2237,6 +2244,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             console.log(crop.rows);
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
                 crop: crop.rows,
+                ref: ref_buffer,
                 dark: (req.query && req.query.dark && (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes'))
             });
             res.setHeader('Content-Type', 'image/png');

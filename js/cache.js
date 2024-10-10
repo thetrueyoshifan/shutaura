@@ -2235,7 +2235,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 width = parseInt(data.w.toString());
             if (data.d)
                 dark = !!(data.d);
-            else if (req.query)
+            if (req.query.dark)
                 dark = (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes')
 
             // { t: s: c: f: u: e: h: a: o: }

@@ -2172,7 +2172,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         // Blur the image using sharp
         const blurredBackgroundBuffer = await sharp(imageBuffer)
             .resize({ backgroundWidth, backgroundHeight }) // Resize to cover the canvas dimensions
-            .blur(25)
+            .blur(10)
             .modulate({
                 brightness: (opts.dark) ? 0.8 : 1.2,
                 saturate: 2
@@ -2182,8 +2182,12 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
         // Load the blurred image into the canvas
         const blurredImage = await loadImage(blurredBackgroundBuffer);
-
         ctx.drawImage(blurredImage, offsetBgX, offsetBgY, backgroundWidth, backgroundHeight);
+
+        if (opts && opts.tint) {
+            ctx.fillStyle = `rgba(${opts.tint.r}, ${opts.tint.g}, ${opts.tint.b}, 0.5)`;
+            ctx.fillRect(0, 0, width, height);
+        }
 
         // Apply shadow to the image
         ctx.shadowColor = '#00000050';
@@ -2239,9 +2243,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             if (req.query.dark)
                 dark = (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes')
 
-            // { t: s: c: f: u: e: h: a: o: }
-
-            console.log(data);
+            // { t: s: c: f: u: e: h: a: o: { t:[] } h: w: }
             if (!data.t)
                 return res.status(400).send("Missing storage type parameter");
             if (!width || !height)
@@ -2253,7 +2255,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             let ref;
 
             if (data.t === 0) {
-                Logger.printLine("ReqGenerator", `[LocalFS] ${path.join(systemglobal.CDN_Base_Path, data.p, (data.m || data.f))} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info");
+                Logger.printLine("ReqGenerator", `[LocalFS] ${path.join(systemglobal.CDN_Base_Path, data.p, (data.m || data.f))} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info", data);
                 if (data.m && fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'master', data.p, data.m))) {
                     buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'master', data.p, data.m));
                     if (data.f && fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'full', data.p, data.f)))
@@ -2265,7 +2267,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 }
             } else if (data.t === 1) {
                 const path = `${data.c}/${data.p}/${data.n}`;
-                Logger.printLine("ReqGenerator", `[CloudFS] ${path} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info");
+                Logger.printLine("ReqGenerator", `[CloudFS] ${path} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info", data);
                 if (!data.a)
                     Logger.printLine("ReqGenerator", `[CloudFS] Missing Discord Attachment Authentication Value, Will have to request it...`, "warning");
                 buffer = await downloadImage(`https://cdn.discordapp.com/attachments/${path}${(data.a) ? '?' + data.a : ''}`);

@@ -2172,7 +2172,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         // Blur the image using sharp
         const blurredBackgroundBuffer = await sharp(imageBuffer)
             .resize({ backgroundWidth, backgroundHeight }) // Resize to cover the canvas dimensions
-            .blur(10)
+            .blur(8)
             .modulate({
                 brightness: (opts && opts.tint && opts.tint.d) ? 0.8 : 1.2,
                 saturate: 2
@@ -2190,7 +2190,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         }
 
         // Apply shadow to the image
-        ctx.shadowColor = '#00000050';
+        ctx.shadowColor = '#00000070';
         ctx.shadowBlur = 25;
         ctx.drawImage(image, offsetX, offsetY, targetWidth, targetHeight);
 

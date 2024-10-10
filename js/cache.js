@@ -443,7 +443,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 if (params.get('ex') && params.get('is') && params.get('hm')) {
                     const expires = new Date(parseInt(params.get('ex') || '', 16) * 1000);
                     if (expires.getTime() > Date.now()) {
-                        ok(ok);
+                        ok(url);
                         return false;
                     }
                 }
@@ -460,7 +460,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             const response = await fetch('https://discord.com/api/v9/attachments/refresh-urls', payload);
 
             if (response.status !== 200) {
-                ok(false);
+                ok(url);
                 return false;
             }
 
@@ -482,7 +482,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 }
             } else {
                 console.log(json);
-                ok(false);
+                ok(url);
             }
             return false;
         });
@@ -2105,8 +2105,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
     async function downloadImage(inputUrl) {
         return new Promise(async cb => {
-            const url = await getDiscordURL(inputUrl);
-            console.log(url);
+            const url = (await getDiscordURL(inputUrl));
             request.get({
                 url,
                 headers: {

@@ -2224,6 +2224,70 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         }
     }
 
+    app.get('/ads-gen/:data/:placeholder', async (req, res) => {
+        let { width, height } = req.query;
+        let dark
+        try {
+            const data = JSON.parse(Buffer.from(decodeURIComponent(req.params.data), 'base64').toString('utf-8'));
+            if (data.h)
+                height = parseInt(data.h.toString());
+            if (data.w)
+                width = parseInt(data.w.toString());
+            if (data.d)
+                dark = !!(data.d);
+            else if (req.query)
+                dark = (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes')
+
+            // { t: s: c: f: u: e: h: a: o: }
+
+            if (!width || !height)
+                return res.status(400).send("Missing height or width parameter");
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].indexOf((data.n || data.m || data.f).split('.').pop().toLowerCase()) === -1)
+                return res.status(400).send("Unsupported File Format");
+
+            let buffer;
+            let ref;
+            const crop = (data.u && data.e) ? await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [data.u, data.e]) : { rows: [] };
+            console.log(crop.rows);
+
+            if (data.t === 0) {
+                Logger.printLine("ReqGenerator", `[LocalFS] ${path.join(systemglobal.CDN_Base_Path, data.p, (data.m || data.f))} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info");
+                if (data.m && fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'master', data.p, data.m))) {
+                    buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'master', data.p, data.m));
+                    if (data.f && fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'full', data.p, data.f)))
+                        ref = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'full', data.p, data.f));
+                } else if (data.f && fs.existsSync(path.join(systemglobal.CDN_Base_Path, 'full', data.p, data.f))) {
+                    buffer = fs.readFileSync(path.join(systemglobal.CDN_Base_Path, 'full', data.p, data.f));
+                } else {
+                    return res.status(404).end();
+                }
+            } else if (data.t === 1) {
+                const path = `${data.c}/${data.h}/${data.n}`;
+                Logger.printLine("ReqGenerator", `[CloudFS] ${path} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info");
+                if (!data.a)
+                    Logger.printLine("ReqGenerator", `[CloudFS] Missing Discord Attachment Authentication Value, Will have to request it...`, "warning");
+                buffer = await downloadImage(`https://cdn.discordapp.com/attachments/${path}${(data.a) ? '?' + data.a : ''}`);
+                if (!buffer)
+                    return res.status(501).end();
+            }
+            const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
+                crop: crop.rows,
+                ref,
+                dark,
+                ...data.o
+            });
+            if (imageBuffer) {
+                res.setHeader('Content-Disposition', `attachment; filename="${path.basename(encodeURIComponent(data.n || req.query.placeholder))}"`);
+                res.setHeader('Content-Type', 'image/png');
+                res.send(imageBuffer);
+            } else {
+                res.status(500).send('Error generating image');
+            }
+        } catch (error) {
+            Logger.printLine("ReqGenerator", `Error During Generation: ${error.message}`, "error");
+            res.status(500).send('Error generating image');
+        }
+    });
     app.get('/ads-gen/local/:user/:eid/:server/:channel/:file', async (req, res) => {
         const { width, height } = req.query;
         try {

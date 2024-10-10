@@ -2228,7 +2228,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         let { width, height } = req.query;
         let dark
         try {
-            const data = JSON.parse(Buffer.from(decodeURIComponent(req.params.data), 'base64').toString('utf-8'));
+            const data = JSON.parse(atob(decodeURIComponent(req.params.data)));
             if (data.h)
                 height = parseInt(data.h.toString());
             if (data.w)

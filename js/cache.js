@@ -435,7 +435,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
     }
 
     async function getDiscordURL(url, eid, force) {
-        console.log(url);
         if (!systemglobal.User_Discord_Key)
             return url;
         return new Promise(async ok => {
@@ -2252,8 +2251,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
             let buffer;
             let ref;
-            const crop = (data.u && data.e) ? await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [data.u, data.e]) : { rows: [] };
-            console.log(crop.rows);
 
             if (data.t === 0) {
                 Logger.printLine("ReqGenerator", `[LocalFS] ${path.join(systemglobal.CDN_Base_Path, data.p, (data.m || data.f))} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info");
@@ -2267,7 +2264,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                     return res.status(404).end();
                 }
             } else if (data.t === 1) {
-                const path = `${data.c}/${data.h}/${data.n}`;
+                const path = `${data.c}/${data.p}/${data.n}`;
                 Logger.printLine("ReqGenerator", `[CloudFS] ${path} : ${width}x${height} ${(dark) ? "(Dark)" : ""}`, "info");
                 if (!data.a)
                     Logger.printLine("ReqGenerator", `[CloudFS] Missing Discord Attachment Authentication Value, Will have to request it...`, "warning");
@@ -2275,6 +2272,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 if (!buffer)
                     return res.status(501).end();
             }
+            const crop = (data.u && data.e) ? await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [data.u, data.e]) : { rows: [] };
+            if (crop.rows.length > 0)
+                crop.map(c => Logger.printLine("ReqGenerator", `Crop Values: ${c}`, "info"));
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
                 crop: crop.rows,
                 ref,

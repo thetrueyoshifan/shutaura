@@ -2224,6 +2224,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 return res.status(404).end();
             }
             const crop = await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [req.params.user, req.params.eid]);
+            console.log(crop);
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
                 crop: crop.rows,
                 dark: (req.query && req.query.dark && (req.query.dark.toLowerCase() === 'true' || req.query.dark.toLowerCase() === 'yes'))

@@ -468,6 +468,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
             if (Array.isArray(json.refreshed_urls) && json.refreshed_urls[0].refreshed) {
                 const refreshed_url = new URL(json.refreshed_urls[0].refreshed);
+                console.log(refreshed_url)
                 ok(refreshed_url.href);
 
                 const ah = refreshed_url.href.split('?');

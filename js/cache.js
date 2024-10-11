@@ -2218,23 +2218,25 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         if (!crop && ((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5)) {
             return generateADSImage(imageBuffer, width, height, opts);
         } else {
-            let image = await sharp(imageBuffer).png()
+            let pre_image = await sharp(imageBuffer)
+                .png();
             if (crop) {
                 if (crop.r)
-                    image.rotate(crop.r);
-                image.extract({
-                    width: parseInt((crop.w * widthMultiplier).toFixed(0)),
-                    height: parseInt((crop.h * heightMultiplier).toFixed(0)),
-                    left: parseInt((crop.x * widthMultiplier).toFixed(0)),
-                    top: parseInt((crop.y * heightMultiplier).toFixed(0)),
-                });
+                    pre_image.rotate(crop.r);
                 if (crop.sx === -1)
-                    image.flop();
+                    pre_image.flop();
                 if (crop.sy === -1)
-                    image.flip();
-                return image.toBuffer();
+                    pre_image.flip();
+                let image = await sharp(await pre_image.toBuffer())
+                    .extract({
+                        width: parseInt((crop.w * widthMultiplier).toFixed(0)),
+                        height: parseInt((crop.h * heightMultiplier).toFixed(0)),
+                        left: parseInt((crop.x * widthMultiplier).toFixed(0)),
+                        top: parseInt((crop.y * heightMultiplier).toFixed(0)),
+                    });
+                return await image.toBuffer();
             } else {
-                return image.toBuffer();
+                return await pre_image.toBuffer();
             }
         }
     }

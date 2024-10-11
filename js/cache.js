@@ -2220,10 +2220,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         } else {
             let image = await sharp(imageBuffer).png()
             if (crop) {
-                if (crop.sx === -1)
-                    image.flop();
-                if (crop.sy === -1)
-                    image.flip();
                 if (crop.r)
                     image.rotate(crop.r);
                 image.extract({
@@ -2232,6 +2228,10 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                     left: parseInt((crop.x * widthMultiplier).toFixed(0)),
                     top: parseInt((crop.y * heightMultiplier).toFixed(0)),
                 });
+                if (crop.sx === -1)
+                    image.flop();
+                if (crop.sy === -1)
+                    image.flip();
                 return image.toBuffer();
             } else {
                 return image.toBuffer();

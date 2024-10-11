@@ -2223,19 +2223,18 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             if (crop) {
                 if (crop.r)
                     pre_image.rotate(crop.r);
-                pre_image.extract({
+                if (crop.sx === -1)
+                    pre_image.flop();
+                if (crop.sy === -1)
+                    pre_image.flip();
+                const pass_1 = await pre_image.toBuffer();
+                let image = sharp(pass_1)
+                image.extract({
                     width: parseInt((crop.w * widthMultiplier).toFixed(0)),
                     height: parseInt((crop.h * heightMultiplier).toFixed(0)),
                     left: parseInt((crop.x * widthMultiplier).toFixed(0)),
                     top: parseInt((crop.y * heightMultiplier).toFixed(0)),
                 });
-                const pass_1 = await pre_image.toBuffer();
-                let image = sharp(pass_1)
-                if (crop.sx === -1)
-                    image.flop();
-                if (crop.sy === -1)
-                    image.flip();
-
                 return image.toBuffer();
             } else {
                 return pre_image.toBuffer();

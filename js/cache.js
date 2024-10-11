@@ -2220,8 +2220,12 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         } else {
             let image = await sharp(imageBuffer).png()
             if (crop) {
+                if (crop.sx === -1)
+                    image.flop();
+                if (crop.sy === -1)
+                    image.flip();
                 if (crop.r)
-                    image.rotate(crop.r)
+                    image.rotate(crop.r);
                 image.extract({
                     width: parseInt((crop.w * widthMultiplier).toFixed(0)),
                     height: parseInt((crop.h * heightMultiplier).toFixed(0)),
@@ -2275,7 +2279,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 if (!buffer)
                     return res.status(501).end();
             }
-            const crop = (data.u && data.e) ? await db.query(`SELECT type, x, y, h, w, r FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [data.u, data.e]) : { rows: [] };
+            const crop = (data.u && data.e) ? await db.query(`SELECT type, x, y, h, w, r, sx, sy FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [data.u, data.e]) : { rows: [] };
             if (crop.rows.length > 0)
                 crop.rows.map(c => Logger.printLine("ReqGenerator", `Crop Values: ${JSON.stringify(c)}`, "info"));
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {

@@ -2218,7 +2218,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         if (!crop && ((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5)) {
             return generateADSImage(imageBuffer, width, height, opts);
         } else {
-            let pre_image = await sharp(imageBuffer)
+            let pre_image = sharp(imageBuffer)
                 .png();
             if (crop) {
                 if (crop.r)
@@ -2229,15 +2229,16 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                     left: parseInt((crop.x * widthMultiplier).toFixed(0)),
                     top: parseInt((crop.y * heightMultiplier).toFixed(0)),
                 });
-                let image = await sharp(await pre_image.toBuffer())
+                const pass_1 = await pre_image.toBuffer();
+                let image = sharp(pass_1)
                 if (crop.sx === -1)
                     image.flop();
                 if (crop.sy === -1)
                     image.flip();
 
-                return await image.toBuffer();
+                return image.toBuffer();
             } else {
-                return await pre_image.toBuffer();
+                return pre_image.toBuffer();
             }
         }
     }

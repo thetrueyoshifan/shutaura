@@ -2212,7 +2212,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         const canvasRatio = width / height;
         const crop = (opts && opts.crop && opts.crop.length > 0) ? opts.crop.filter(e => e.type === ((canvasRatio <= 1) ? 1 : 0))[0] : undefined;
 
-
         Logger.printLine("ImageGenerator", `Canvas@${canvasRatio.toFixed(2)} Image@${imgRatio.toFixed(2)} with result of ${(canvasRatio - imgRatio).toFixed(4)}: ${((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5) ? "Generate" : "Direct"} Results`, "info");
 
         if (!crop && ((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5)) {
@@ -2220,6 +2219,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         } else {
             let pre_image = sharp(imageBuffer)
                 .png();
+            if (opts && opts.tint) {
+                pre_image.flatten({ background: { r: opts.tint.r, g: opts.tint.g, b: opts.tint.b } })
+            }
             if (crop) {
                 if (crop.r)
                     pre_image.rotate(crop.r);

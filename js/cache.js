@@ -2201,7 +2201,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         ctx.drawImage(image, offsetX, offsetY, targetWidth, targetHeight);
 
         // Return the canvas as a PNG buffer
-        return canvas.toBuffer('image/png');
+        return canvas.toBuffer(`image/${(opts && opts.format) ? opts.format.toLowerCase() : 'png'}`);
     }
     async function calculateImage(imageBuffer, width, height, opts) {
         const image = await loadImage(imageBuffer);
@@ -2218,10 +2218,13 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             return generateADSImage(imageBuffer, width, height, opts);
         } else {
             let pre_image = sharp(imageBuffer)
-                .png();
-            if (opts && opts.tint) {
+                .withMetadata()
+            if (opts && opts.format)
+                pre_image.toFormat(opts.format.toLowerCase());
+            else
+                pre_image.png();
+            if (opts && opts.tint)
                 pre_image.flatten({ background: { r: opts.tint.r, g: opts.tint.g, b: opts.tint.b } })
-            }
             if (crop) {
                 if (crop.r)
                     pre_image.rotate(crop.r);
@@ -2290,13 +2293,20 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
                 crop: crop.rows,
                 ref,
+                format: (req.query.format) ? req.query.format : undefined,
                 ...data.o
             });
             if (imageBuffer) {
-                if (!req.query.noDownload)
-                    res.setHeader('Content-Disposition', `attachment; filename="${path.basename(encodeURIComponent(data.n || req.query.placeholder))}"`);
-                res.setHeader('Content-Type', 'image/png');
-                res.send(imageBuffer);
+                if (req.query.base64) {
+                    res.write(`data:image/${req.query.format};base64,`);
+                    res.write(buffer.toString('base64'))
+                    res.end();
+                } else {
+                    if (!req.query.noDownload)
+                        res.setHeader('Content-Disposition', `attachment; filename="${path.basename(encodeURIComponent(data.n || req.query.placeholder))}"`);
+                    res.setHeader('Content-Type', 'image/png');
+                    res.send(imageBuffer);
+                }
             } else {
                 res.status(500).send('Error generating image');
             }

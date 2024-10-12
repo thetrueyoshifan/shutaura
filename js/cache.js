@@ -2195,6 +2195,10 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(opts && opts.tint && opts.tint.d) ? '0.25' : '0.45' })`;
             ctx.fillRect(0, 0, width, height);
         }
+        if (opts && opts.ovr_dark) {
+            ctx.fillStyle = `rgba(0,0,0,${(opts && opts.tint && opts.tint.d) ? '0.25' : '0.65' })`;
+            ctx.fillRect(0, 0, width, height);
+        }
 
         // Apply shadow to the image
         ctx.shadowColor = '#00000070';

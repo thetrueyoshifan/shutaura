@@ -2317,7 +2317,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 if (!buffer)
                     return res.status(501).end();
             }
-            const crop = (!nocrop && data.u && data.e) ? imgCrop.filter(e => e.user === data.u && e.eid === data.eid) : [];
+            const crop = (!nocrop && data.u && data.e) ? imgCrop.filter(e => e.user.toString() === data.u.toString() && e.eid.toString() === data.eid.toString()) : [];
             if (crop.length > 0)
                 crop.map(c => Logger.printLine("ReqGenerator", `Crop Values: ${JSON.stringify(c)}`, "info"));
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {

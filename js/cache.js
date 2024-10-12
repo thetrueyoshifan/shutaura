@@ -2298,7 +2298,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             });
             if (imageBuffer) {
                 if (req.query.base64) {
-                    res.write(`data:image/${req.query.format};base64,`);
+                    res.write(`data:image/${req.query.format || 'png'};base64,`);
                     res.write(buffer.toString('base64'))
                     res.end();
                 } else {

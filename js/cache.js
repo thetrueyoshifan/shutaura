@@ -2202,7 +2202,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         ctx.drawImage(image, offsetX, offsetY, targetWidth, targetHeight);
 
         // Return the canvas as a PNG buffer
-        if (opts && opts.format) {
+        if (opts && opts.format && opts.format !== 'png') {
             const cv = await canvas.toBuffer(`image/png`);
             return sharp(cv)
                 .toFormat((opts.format.toLowerCase() === 'webm') ? 'webp': opts.format.toLowerCase())
@@ -2310,7 +2310,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             if (imageBuffer) {
                 if (base64) {
                     res.write(`data:image/${(format) ? ((format.toLowerCase() === 'webm') ? 'webp': format.toLowerCase()) : 'png'};base64,`);
-                    res.write(buffer.toString('base64'))
+                    res.write(imageBuffer.toString('base64'))
                     res.end();
                 } else {
                     if (!req.query.noDownload)

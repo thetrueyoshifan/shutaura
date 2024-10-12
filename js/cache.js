@@ -178,7 +178,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
     async function loadCropCache() {
         const _image_crops = await db.query(`SELECT * FROM sequenzia_wallpaper_crop`);
         if (_image_crops.rows.length > 0)
-            imgCrop = _image_crops;
+            imgCrop = _image_crops.rows;
 
         setTimeout(loadDatabaseCache, 300000);
     }

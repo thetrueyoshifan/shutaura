@@ -2261,7 +2261,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
     //app.use(cors());
     app.get('/ads-gen/:data/:placeholder', async (req, res) => {
-        let { width, height, format, base64 } = req.query;
+        let { width, height, format, base64, nocrop } = req.query;
         try {
             const data = JSON.parse(atob(decodeURIComponent(req.params.data)));
             if (data.h)
@@ -2270,6 +2270,8 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 width = parseInt(data.w.toString());
             if (data.r)
                 base64 = !!(data.r);
+            if (data.nc)
+                nocrop = !!(data.nc);
 
             // { t: s: c: f: u: e: h: a: o: { t:[] } h: w: }
             if (data.t === undefined)
@@ -2302,7 +2304,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 if (!buffer)
                     return res.status(501).end();
             }
-            const crop = (data.u && data.e) ? await db.query(`SELECT type, x, y, h, w, r, sx, sy FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [data.u, data.e]) : { rows: [] };
+            const crop = (!nocrop && data.u && data.e) ? await db.query(`SELECT type, x, y, h, w, r, sx, sy FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [data.u, data.e]) : { rows: [] };
             if (crop.rows.length > 0)
                 crop.rows.map(c => Logger.printLine("ReqGenerator", `Crop Values: ${JSON.stringify(c)}`, "info"));
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {

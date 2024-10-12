@@ -44,6 +44,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
     let args = minimist(process.argv.slice(2));
     const sizeOf = require('image-size');
     const remoteSize = require('remote-file-size');
+    const cors = require('cors');
     const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
     const Discord_CDN_Accepted_Files = ['jpg','jpeg','jfif','png','gif', 'webp'];
 
@@ -2247,6 +2248,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         }
     }
 
+    app.use(cors());
     app.get('/ads-gen/:data/:placeholder', async (req, res) => {
         let { width, height, format, base64 } = req.query;
         try {

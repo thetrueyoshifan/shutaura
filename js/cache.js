@@ -2202,7 +2202,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         ctx.drawImage(image, offsetX, offsetY, targetWidth, targetHeight);
 
         // Return the canvas as a PNG buffer
-        return canvas.toBuffer(`image/${(opts && opts.format) ? opts.format.toLowerCase() : 'png'}`);
+        return canvas.toBuffer(`image/${(opts && opts.format) ? ((opts.format.toLowerCase() === 'webm') ? 'webp': opts.format.toLowerCase()) : 'png'}`);
     }
     async function calculateImage(imageBuffer, width, height, opts) {
         const image = await loadImage(imageBuffer);
@@ -2221,7 +2221,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             let pre_image = sharp(imageBuffer)
                 .withMetadata()
             if (opts && opts.format)
-                pre_image.toFormat(opts.format.toLowerCase());
+                pre_image.toFormat((opts.format.toLowerCase() === 'webm') ? 'webp': opts.format.toLowerCase());
             else
                 pre_image.png();
             if (opts && opts.tint)
@@ -2302,7 +2302,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             });
             if (imageBuffer) {
                 if (base64) {
-                    res.write(`data:image/${format || 'png'};base64,`);
+                    res.write(`data:image/${(format) ? ((format.toLowerCase() === 'webm') ? 'webp': format.toLowerCase()) : 'png'};base64,`);
                     res.write(buffer.toString('base64'))
                     res.end();
                 } else {

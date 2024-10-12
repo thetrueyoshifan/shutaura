@@ -2255,7 +2255,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         }
     }
 
-    app.use(cors());
+    //app.use(cors());
     app.get('/ads-gen/:data/:placeholder', async (req, res) => {
         let { width, height, format, base64 } = req.query;
         try {

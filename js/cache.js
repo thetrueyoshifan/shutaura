@@ -183,6 +183,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         setTimeout(loadDatabaseCache, 300000);
     }
     await loadCropCache();
+    console.log(imgCrop);
 
     if (args.whost) {
         systemglobal.Watchdog_Host = args.whost

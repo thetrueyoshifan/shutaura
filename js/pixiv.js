@@ -139,6 +139,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             Array.from(pixivNotify.keys()).filter(e => _tni.indexOf(e) === -1).forEach(e => pixivNotify.delete(e));
             Logger.printLine("PostNotify", `Notification enabled for ${pixivNotify.size} users`, 'info')
         }
+        setTimeout(loadDatabaseCache, 1200000);
     }
     await loadDatabaseCache();
     console.log(systemglobal)

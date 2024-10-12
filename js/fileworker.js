@@ -237,7 +237,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 		}))
 
 		Logger.printLine("SQL", "All SQL Configuration records have been assembled!", "debug");
-		setTimeout(loadDatabaseCache, 1200000)
+		setTimeout(loadDatabaseCache, 1200000);
 	}
 	await loadDatabaseCache();
 	if (args.whost) {

@@ -66,6 +66,8 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
     let skipped = {};
     let pastFiles = {};
 
+    let imgCrop = [];
+
     async function loadDatabaseCache() {
         Logger.printLine("SQL", "Getting System Parameters", "debug")
         const _systemparams = await db.query(`SELECT * FROM global_parameters WHERE (system_name = ? OR system_name IS NULL) AND (account = ? OR account IS NULL) AND (application = 'cdn' OR application IS NULL) ORDER BY system_name, application, account`, [systemglobal.SystemName, systemglobal.HostID])
@@ -169,8 +171,19 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             }
             backupSystemName = `${systemglobal.SystemName}${(systemglobal.CDN_ID) ? '-' + systemglobal.CDN_ID : ''}`
         }
+        setTimeout(loadDatabaseCache, 1200000);
     }
     await loadDatabaseCache();
+
+    async function loadCropCache() {
+        const _image_crops = await db.query(`SELECT * FROM sequenzia_wallpaper_crop`);
+        if (_image_crops.rows.length > 0)
+            imgCrop = _image_crops;
+
+        setTimeout(loadDatabaseCache, 300000);
+    }
+    await loadCropCache();
+
     if (args.whost) {
         systemglobal.Watchdog_Host = args.whost
     }
@@ -2304,11 +2317,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 if (!buffer)
                     return res.status(501).end();
             }
-            const crop = (!nocrop && data.u && data.e) ? await db.query(`SELECT type, x, y, h, w, r, sx, sy FROM sequenzia_wallpaper_crop WHERE user = ? AND eid = ?`, [data.u, data.e]) : { rows: [] };
-            if (crop.rows.length > 0)
-                crop.rows.map(c => Logger.printLine("ReqGenerator", `Crop Values: ${JSON.stringify(c)}`, "info"));
+            const crop = (!nocrop && data.u && data.e) ? imgCrop.filter(e => e.user === data.u && e.eid === data.eid) : [];
+            if (crop.length > 0)
+                crop.map(c => Logger.printLine("ReqGenerator", `Crop Values: ${JSON.stringify(c)}`, "info"));
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
-                crop: crop.rows,
+                crop,
                 ref,
                 format,
                 ...data.o

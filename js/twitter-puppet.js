@@ -198,6 +198,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 		});
 		Array.from(twitterNotify.keys()).filter(e => _tni.indexOf(e) === -1).forEach(e => twitterNotify.delete(e));
 		console.log(`Notification enabled for ${twitterNotify.size} users\n${Array.from(twitterNotify.keys())}`);
+		setTimeout(loadDatabaseCache, 1200000);
 	}
 	await loadDatabaseCache();
 	if (args.whost) {

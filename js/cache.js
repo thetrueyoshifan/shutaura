@@ -2248,13 +2248,15 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
     }
 
     app.get('/ads-gen/:data/:placeholder', async (req, res) => {
-        let { width, height } = req.query;
+        let { width, height, format, base64 } = req.query;
         try {
             const data = JSON.parse(atob(decodeURIComponent(req.params.data)));
             if (data.h)
                 height = parseInt(data.h.toString());
             if (data.w)
                 width = parseInt(data.w.toString());
+            if (data.r)
+                base64 = !!(data.r);
 
             // { t: s: c: f: u: e: h: a: o: { t:[] } h: w: }
             if (data.t === undefined)
@@ -2293,12 +2295,12 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             const imageBuffer = await calculateImage(buffer, parseInt(width), parseInt(height), {
                 crop: crop.rows,
                 ref,
-                format: (req.query.format) ? req.query.format : undefined,
+                format,
                 ...data.o
             });
             if (imageBuffer) {
-                if (req.query.base64) {
-                    res.write(`data:image/${req.query.format || 'png'};base64,`);
+                if (base64) {
+                    res.write(`data:image/${format || 'png'};base64,`);
                     res.write(buffer.toString('base64'))
                     res.end();
                 } else {

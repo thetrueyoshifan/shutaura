@@ -1330,7 +1330,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                                 LEFT OUTER JOIN (SELECT * FROM kanmi_records_cdn WHERE host = ?) y ON (x.eid = y.eid)
                        WHERE (y.heid IS NULL OR (data IS NOT NULL AND y.ext_0 = 0) OR 
                               (x.fileid IS NOT NULL AND y.mfull = 0 ${(systemglobal.CDN_Ignore_Master_Channels) ? 'AND x.channel NOT IN (' + systemglobal.CDN_Ignore_Master_Channels.join(', ') + ')' : ''}))
-                         AND x.id NOT IN (SELECT id FROM kanmi_cdn_skipped) ${(systemglobal.CDN_Delay_Pull) ? 'AND (((fileid IS NULL AND attachment_name NOT LIKE \'%.mp%_\' AND attachment_name NOT LIKE \'%.jp%_\' AND attachment_name NOT LIKE \'%.jfif\' AND attachment_name NOT LIKE \'%.png\' AND attachment_name NOT LIKE \'%.gif\' AND attachment_name NOT LIKE \'%.web%_\') AND x.attachment_auth_ex > NOW() + INTERVAL 12 HOUR) OR (x.attachment_auth_ex < NOW() + INTERVAL 12 HOUR))' : ''}
+                         AND x.id NOT IN (SELECT id FROM kanmi_cdn_skipped) ${(systemglobal.CDN_Delay_Pull) ? 'AND (fileid IS NOT NULL OR (((fileid IS NULL AND attachment_name NOT LIKE \'%.mp%_\' AND attachment_name NOT LIKE \'%.jp%_\' AND attachment_name NOT LIKE \'%.jfif\' AND attachment_name NOT LIKE \'%.png\' AND attachment_name NOT LIKE \'%.gif\' AND attachment_name NOT LIKE \'%.web%_\') AND x.attachment_auth_ex > NOW() + INTERVAL 12 HOUR) OR (x.attachment_auth_ex < NOW() + INTERVAL 12 HOUR)))' : ''}
                        ORDER BY ${(systemglobal.CDN_Match_Latest) ? "eid DESC" : "RAND()"}
                        LIMIT ?`;
         console.log(q);

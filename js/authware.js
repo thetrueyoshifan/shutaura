@@ -917,6 +917,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         }
 
         const authViewsqlFields = [
+            'kanmi_channels.cid',
             'kanmi_channels.channelid',
             'kanmi_channels.cid AS channel_eid',
             'kanmi_channels.virtual_cid AS virtual_channel_eid',

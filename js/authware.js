@@ -993,6 +993,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
         allUserIds.filter(f => !thisUser || (thisUser && f === thisUser)).map(async userId => {
             const sidebarViewsqlFields = [
+                `kanmi_auth_${userId}.cid`,
                 `kanmi_auth_${userId}.channelid`,
                 `kanmi_auth_${userId}.channel_eid`,
                 `kanmi_auth_${userId}.virtual_channel_eid`,

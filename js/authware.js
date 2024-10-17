@@ -1295,7 +1295,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                                         }
                                     })
                                 } else { channelName = thisChannel.channel_nice }
-                                const _folders = folderChannels.filter(e => e.cid === thisChannel.cid).map(h => { return { fid: h.fid, name: h.name, icon: h.icon } });
+                                const _folders = folderChannels.filter(e => e.cid === thisChannel.cid).map(h => { return { fid: h.fid, name: h.name, lock: h.c_lock, icon: h.icon } });
 
                                 return ({
                                     type: 0,

@@ -2219,13 +2219,13 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         ctx.drawImage(image, offsetX, offsetY, targetWidth, targetHeight);
 
         // Return the canvas as a PNG buffer
-        if (opts && opts.format && opts.format !== 'png') {
-            const cv = await canvas.toBuffer(`image/png`);
-            return sharp(cv)
-                .toFormat((opts.format.toLowerCase() === 'webm') ? 'webp': opts.format.toLowerCase())
-                .toBuffer();
-        } else
-            return canvas.toBuffer(`image/png`);
+            if (opts && opts.format && opts.format !== 'png') {
+                const cv = await canvas.toBuffer(`image/png`);
+                return sharp(cv)
+                    .toFormat((opts.format.toLowerCase() === 'webm') ? 'webp': opts.format.toLowerCase())
+                    .toBuffer();
+            } else
+                return canvas.toBuffer(`image/png`);
 
     }
     async function calculateImage(imageBuffer, width, height, opts) {
@@ -2265,9 +2265,23 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                     left: parseInt((crop.x * widthMultiplier).toFixed(0)),
                     top: parseInt((crop.y * heightMultiplier).toFixed(0)),
                 });
-                return image.toBuffer();
+                return image
+                    .resize({
+                        width: width,
+                        height: height,
+                        fit: sharp.fit.cover, // Ensure it covers the entire area
+                        position: sharp.strategy.attention // Biased towards the top center
+                    })
+                    .toBuffer();
             } else {
-                return pre_image.toBuffer();
+                return pre_image
+                    .resize({
+                        width: width,
+                        height: height,
+                        fit: sharp.fit.cover, // Ensure it covers the entire area
+                        position: sharp.strategy.attention // Biased towards the top center
+                    })
+                    .toBuffer();
             }
         }
     }

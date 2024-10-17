@@ -1516,6 +1516,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 									if (MessageContents.itemDateTime) {
 										Cleanedobject.DateTime = MessageContents.itemDateTime
 									}
+									if (MessageContents.messageChannelFolder) {
+										Cleanedobject.messageChannelFolder = MessageContents.messageChannelFolder
+									}
 									if (MessageContents.tweetMetadata) {
 										Cleanedobject.tweetMeta = MessageContents.tweetMetadata
 									}
@@ -1566,6 +1569,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 								MessageText: MessageContents.messageText,
 								FileName: MessageContents.itemFileName.split("?")[0],
 								FilePath: tempFilePath
+							}
+							if (MessageContents.messageChannelFolder) {
+								Cleanedobject.messageChannelFolder = MessageContents.messageChannelFolder
 							}
 							if (MessageContents.itemDateTime) {
 								Cleanedobject.DateTime = MessageContents.itemDateTime
@@ -1650,6 +1656,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 										if (MessageContents.itemDateTime) {
 											Cleanedobject.DateTime = MessageContents.itemDateTime
 										}
+										if (MessageContents.messageChannelFolder) {
+											Cleanedobject.messageChannelFolder = MessageContents.messageChannelFolder
+										}
 										if (MessageContents.tweetMetadata) {
 											Cleanedobject.tweetMeta = MessageContents.tweetMetadata
 										}
@@ -1698,6 +1707,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 							}
 							if (MessageContents.itemDateTime) {
 								Cleanedobject.DateTime = MessageContents.itemDateTime
+							}
+							if (MessageContents.messageChannelFolder) {
+								Cleanedobject.messageChannelFolder = MessageContents.messageChannelFolder
 							}
 							if (MessageContents.tweetMetadata) {
 								Cleanedobject.tweetMeta = MessageContents.tweetMetadata
@@ -1769,6 +1781,10 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 				parameters.messageChannelID = object.ChannelID.toString()
 				parameters.messageText = object.MessageText.toString()
 				parameters.itemFileName = object.FileName.split("?")[0].toString()
+				if (object.messageChannelFolder) {
+					parameters.messageChannelFolder = object.messageChannelFolder
+					console.log(`Got Folder ID for File : ${parameters.messageChannelFolder}`)
+				}
 				if (object.DateTime) {
 					parameters.itemDateTime = object.DateTime.toString()
 					console.log(`Got Remote Date and Time for File : ${parameters.itemDateTime}`)
@@ -1796,6 +1812,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 				parameters.clientGroupID = object.OriginGroup.toString()
 				parameters.itemDateTime = object.DateTime.toString()
 				parameters.tweetMetadata = object.tweetMeta
+				parameters.messageChannelFolder = object.messageChannelFolder;
 				parameters.messageTags = object.messageTags;
 				parameters.messagePostTags = object.messagePostTags;
 				// Determine the Channel to send file to from its folder Path
@@ -1829,6 +1846,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 				parameters.itemFileData = object.FileData.toString()
 				if (object.DateTime) {
 					parameters.itemDateTime = object.DateTime.toString()
+				}
+				if (object.messageChannelFolder) {
+					parameters.messageChannelFolder = object.messageChannelFolder
 				}
 				if (object.tweetMeta) {
 					parameters.tweetMetadata = object.tweetMeta
@@ -1866,6 +1886,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 			}
 			if (externalMetadata.itemDateTime) {
 				parameters.itemDateTime = externalMetadata.itemDateTime;
+			}
+			if (externalMetadata.messageChannelFolder) {
+				parameters.messageChannelFolder = externalMetadata.messageChannelFolder;
 			}
 			if (externalMetadata.tweetMetadata) {
 				parameters.tweetMetadata = externalMetadata.tweetMetadata;

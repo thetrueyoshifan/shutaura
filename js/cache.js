@@ -2279,7 +2279,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                         width: width,
                         height: height,
                         fit: sharp.fit.cover, // Ensure it covers the entire area
-                        position: { top: 0.5, left: 0.5 }  // Biased towards the top center
+                        position: sharp.gravity.north  // Biased towards the top center
                     })
                     .toBuffer();
             }

@@ -2242,6 +2242,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
         if (!crop && ((canvasRatio - imgRatio) > 0.5 || (canvasRatio - imgRatio) < -0.5)) {
             return generateADSImage(imageBuffer, width, height, opts);
         } else {
+            let position = sharp.gravity.north;
             let pre_image = sharp(imageBuffer)
                 .withMetadata()
             if (opts && opts.format)
@@ -2249,7 +2250,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             else
                 pre_image.png();
             if (opts && opts.tint)
-                pre_image.flatten({ background: { r: opts.tint.r, g: opts.tint.g, b: opts.tint.b } })
+                pre_image.flatten({ background: { r: opts.tint.r, g: opts.tint.g, b: opts.tint.b } });
             if (crop) {
                 if (crop.r)
                     pre_image.rotate(crop.r);
@@ -2270,7 +2271,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                         width: width,
                         height: height,
                         fit: sharp.fit.cover, // Ensure it covers the entire area
-                        position: sharp.strategy.attention // Biased towards the top center
+                        position // Biased towards the top center
                     })
                     .toBuffer();
             } else {
@@ -2279,7 +2280,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                         width: width,
                         height: height,
                         fit: sharp.fit.cover, // Ensure it covers the entire area
-                        position: sharp.gravity.north  // Biased towards the top center
+                        position  // Biased towards the top center
                     })
                     .toBuffer();
             }

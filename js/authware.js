@@ -1146,7 +1146,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 })
 
                 await db.query(`CREATE OR REPLACE VIEW kanmi_auth_${userId} AS SELECT x.*, y.virtual_channel_name, y.virtual_channel_description, y.virtual_channel_uri FROM (SELECT x.* FROM (SELECT DISTINCT role FROM discord_users_permissons WHERE userid = '${userId}') z LEFT JOIN (SELECT DISTINCT ${authViewsqlFields} FROM ${authViewsqlTables} WHERE (${authViewsqlWhere}) ) x ON (x.role = z.role)) x LEFT OUTER JOIN (SELECT virtual_cid AS virtual_channel_eid, name AS virtual_channel_name, description AS virtual_channel_description, uri AS virtual_channel_uri FROM kanmi_virtual_channels) y ON (x.virtual_channel_eid = y.virtual_channel_eid) ORDER BY x.position`)
+
                 await db.query(`CREATE OR REPLACE VIEW kanmi_sidebar_${userId} AS SELECT x.*, y.virtual_channel_name, y.virtual_channel_uri, y.virtual_channel_description FROM (SELECT ${sidebarViewsqlFields} FROM ${sidebarViewsqlTables} WHERE ${sidebarViewsqlWhere}) x LEFT OUTER JOIN (SELECT virtual_cid AS virtual_channel_eid, name AS virtual_channel_name, uri AS virtual_channel_uri, description AS virtual_channel_description FROM kanmi_virtual_channels) y ON (x.virtual_channel_eid = y.virtual_channel_eid) ORDER BY ${sidebarViewsqlOrderBy}`);
+
                 const tempLastEpisode = await db.query(`SELECT Max(y.eid) AS eid, MAX(y.show_id) AS show_id FROM (SELECT * FROM kanmi_system.kongou_watch_history WHERE user = '${userId}' ORDER BY date DESC LIMIT 1) x LEFT JOIN (SELECT * FROM kanmi_system.kongou_episodes) y ON (x.eid = y.eid);`)
 
                 if (tempLastEpisode.rows.length > 0) {
@@ -1220,6 +1222,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 const selectCDN = `SELECT * FROM kanmi_records_cdn WHERE (full = 1 OR mfull = 1) AND ( host = ${systemglobal.CDN_ID})`
                 const userAlbums = await db.query(`SELECT rec.*, cdn.host AS cdn_host, cdn.path_hint, cdn.mfull_hint, cdn.full_hint, cdn.preview_hint, cdn.ext_0_hint FROM (SELECT x.aid, x.name, x.uri, x.owner, x.privacy, y.* FROM (SELECT x.*, y.eid FROM (SELECT DISTINCT * FROM sequenzia_albums WHERE owner = ? ORDER BY name ASC) AS x LEFT JOIN (SELECT *, ROW_NUMBER() OVER(PARTITION BY aid ORDER BY RAND()) AS RowNo FROM sequenzia_album_items) AS y ON x.aid = y.aid AND y.RowNo=1) x LEFT JOIN (SELECT eid, channel, attachment_hash, attachment_name, cache_proxy FROM kanmi_records) y ON y.eid = x.eid ORDER BY name ASC) rec LEFT OUTER JOIN (${selectCDN}) cdn ON (rec.eid = cdn.eid)`, [userId])
                 const userArtists = await db.query(`SELECT rec.*, cdn.host AS cdn_host, cdn.path_hint, cdn.mfull_hint, cdn.full_hint, cdn.preview_hint, cdn.ext_0_hint FROM (SELECT * FROM (SELECT kanmi_records.eid, kanmi_records.attachment_hash, kanmi_records.attachment_name, kanmi_records.cache_proxy, kanmi_records.sizeH, kanmi_records.sizeW, kanmi_records.sizeR, kanmi_records.colorR, kanmi_records.colorG, kanmi_records.colorB, sequenzia_index_artists.id AS artist_id, sequenzia_index_artists.artist, sequenzia_index_artists.name AS artist_full_name, sequenzia_index_artists.url AS artist_url, sequenzia_index_artists.search AS artist_search, sequenzia_index_artists.count AS artist_count, sequenzia_index_artists.last AS artist_last, sequenzia_index_artists.source AS artist_source, sequenzia_index_artists.confidence AS artist_confidence, sequenzia_index_artists.rating AS artist_rating, kanmi_auth_${userId}.* FROM kanmi_records,kanmi_auth_${userId}, sequenzia_index_artists  WHERE (sequenzia_index_artists.channelid = kanmi_auth_${userId}.channelid AND kanmi_records.eid = sequenzia_index_artists.last AND kanmi_records.channel = kanmi_auth_${userId}.channelid)) x INNER JOIN (SELECT id AS fav_id, date AS fav_date FROM sequenzia_artists_favorites WHERE userid = "${userId}") y ON x.artist_id = y.fav_id ORDER BY x.artist_last DESC) rec LEFT OUTER JOIN (${selectCDN}) cdn ON (rec.eid = cdn.eid)`)
+                const channelFolders = await db.query(`SELECT f.fid, f.name, f.icon, c.cid, c.channelid FROM (SELECT cid, channelid FROM kanmi_channels) c JOIN (SELECT * FROM kanmi_virtual_folders) f ON (c.cid = f.cid)`);
 
                 const libraryLists = await db.query(`SELECT g.* FROM (SELECT * FROM kongou_media_groups) g INNER JOIN (SELECT media_group FROM kanmi_auth_${userId}) a ON (g.media_group = a.media_group) GROUP BY g.media_group`)
 
@@ -1275,6 +1278,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                         }
                         return distinct
                     })(sidebarObject.rows)
+                    const folderChannels = channelFolders.rows
 
                     superClasses.map((thisSuper) => {
                         let _items = []
@@ -1289,6 +1293,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                                         }
                                     })
                                 } else { channelName = thisChannel.channel_nice }
+                                const _folders = folderChannels.filter(e => e.cid === thisChannel.cid).map(h => { return { fid: h.fid, name: h.name, icon: h.icon } });
 
                                 return ({
                                     type: 0,
@@ -1303,6 +1308,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                                     nsfw: (thisChannel.channel_nsfw === 1),
                                     uri: thisChannel.channel_uri,
                                     description: thisChannel.channel_description,
+                                    folders: _folders,
                                 })
                             })
                             let _mergedChannels = [];

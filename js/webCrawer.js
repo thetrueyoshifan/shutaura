@@ -1575,7 +1575,7 @@ This code is publicly released and is restricted by its project license
                         const deviations = Object.values(initalResults['@@entities'].deviation).reverse();
                         Logger.printLine('DeviantArtGet', `Found ${deviations.length} inital deviations for ${user}`, 'info');
                         const cookieString = await getCookieString(pageURL);
-                        if (!history.error)
+                        if (history.error)
                             Logger.printLine('DeviantArtGet', `Failed to load the history for ${user}`, 'error');
                         else if (deviations.length > 0) {
                             const newDeviations = deviations.filter(f => history.rows.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0);
@@ -1784,7 +1784,7 @@ This code is publicly released and is restricted by its project license
                         const deviations = Object.values(initalResults['@@entities'].deviation).filter(f => history.rows.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0 && f.type === 'image' && !f.isDeleted && !f.tierAccess).reverse();
                         Logger.printLine('DeviantArtGet', `Found ${deviations.length} initial deviations for ${pageURL}`, 'info');
                         const cookieString = await getCookieString(pageURL);
-                        if (!history.error)
+                        if (history.error)
                             Logger.printLine('DeviantArtGet', `Failed to load the history for ${pageURL}`, 'error');
                         else if (deviations.length > 0) {
                             const g = deviations[0];

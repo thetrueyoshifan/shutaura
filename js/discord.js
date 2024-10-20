@@ -6789,7 +6789,7 @@ This code is publicly released and is restricted by its project license
         if (msg.content.split(" _DEST_ ").length > 1) {
             moveTo = msg.content.replace('REQUEST ', '').split(" _DEST_ ")[1].replace('RECOM','').trim();
         }
-        if (msg.embeds[0] !== undefined && msg.embeds[0].type === 'image' && (msg.embeds[0].thumbnail || msg.embeds[0].image) && !(msg.content.includes("pixiv.net/") || msg.content.includes("youtube.com") || msg.content.includes("youtu.be") || msg.content.includes("twitter.com") || msg.content.includes("x.com"))) {
+        if (msg.embeds[0] !== undefined && msg.embeds[0].type === 'image' && (msg.embeds[0].thumbnail || msg.embeds[0].image) && !(msg.content.includes("pixiv.net/") || msg.content.includes("youtube.com") || msg.content.includes("youtu.be") || msg.content.includes("twitter.com") || msg.content.includes("x.com") || msg.content.includes("deviantart.com/"))) {
             downloadMessageFile(msg, moveTo, true)
             activeTasks.delete(`RSAVE_${msg.id}`);
         } else if (url.length > 0) {

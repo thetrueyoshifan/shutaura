@@ -1578,7 +1578,7 @@ This code is publicly released and is restricted by its project license
                         if (!history.error)
                             Logger.printLine('DeviantArtGet', `Failed to load the history for ${user}`, 'error');
                         else if (deviations.length > 0) {
-                            const newDeviations = deviations.filter(f => history.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0);
+                            const newDeviations = deviations.filter(f => history.rows.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0);
                             if (newDeviations.length > 0) {
                                 await sleep(Math.floor(Math.random() * (1000 - 10000 + 1)) + 1000);
                                 let offset = 0;
@@ -1593,8 +1593,8 @@ This code is publicly released and is restricted by its project license
                                         const json = JSON.parse(galleryPage.body);
                                         console.log(json.results.length)
                                         if (json.results.length > 0) {
-                                            const actualImages = json.results.filter(g => history.filter(e => e.url.toLowerCase() === g.url.toLowerCase()).length === 0 && g.type === 'image' && !g.isDeleted && !g.tierAccess);
-                                            const filteredItems = json.results.filter(f => history.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0);
+                                            const actualImages = json.results.filter(g => history.rows.filter(e => e.url.toLowerCase() === g.url.toLowerCase()).length === 0 && g.type === 'image' && !g.isDeleted && !g.tierAccess);
+                                            const filteredItems = json.results.filter(f => history.rows.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0);
                                             Logger.printLine('DeviantArtGet', `Returned ${filteredItems.length} deviations for ${user} (Offset ${offset})`, 'debug');
                                             await Promise.all(actualImages.map(async (g) => {
                                                 const tokens = g.media.token;
@@ -1781,7 +1781,7 @@ This code is publicly released and is restricted by its project license
                         // Time to start extracting base metadata then get gallery
                         const userId = Object.keys(initalResults['@@entities'].user)[0]
                         const username = initalResults['@@entities'].user[userId].username
-                        const deviations = Object.values(initalResults['@@entities'].deviation).filter(f => history.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0 && f.type === 'image' && !f.isDeleted && !f.tierAccess).reverse();
+                        const deviations = Object.values(initalResults['@@entities'].deviation).filter(f => history.rows.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0 && f.type === 'image' && !f.isDeleted && !f.tierAccess).reverse();
                         Logger.printLine('DeviantArtGet', `Found ${deviations.length} initial deviations for ${pageURL}`, 'info');
                         const cookieString = await getCookieString(pageURL);
                         if (!history.error)

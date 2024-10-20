@@ -20,7 +20,6 @@ about release, "snippets", or to report spillage are to be directed to:
 docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 ====================================================================================== */
 
-const systemglobal = require("../config.json");
 (async () => {
     let systemglobal = require('../config.json');
     if (process.env.SYSTEM_NAME && process.env.SYSTEM_NAME.trim().length > 0)

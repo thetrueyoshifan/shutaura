@@ -125,6 +125,8 @@ This code is publicly released and is restricted by its project license
                     systemglobal.SankakuComplex_Interval = parseInt(_intervals[0].param_data.sankakucomplex.toString()) * 3600000
                 if (_intervals[0].param_data.kemonoparty)
                     systemglobal.KemonoParty_Interval = parseInt(_intervals[0].param_data.kemonoparty.toString()) * 3600000
+                if (_intervals[0].param_data.deviantart)
+                    systemglobal.DeviantArt_Interval = parseInt(_intervals[0].param_data.deviantart.toString()) * 3600000
             }
             // {"mpzero": 28800000, "mixcloud": 28800000, "sankakucomplex": 28800000, "myfigurecollection": 3600000, "kemonoparty": 3600000 }
             const _myfigurecollection = systemparams_sql.filter(e => e.param_key === 'webparser.myfigurecollection');
@@ -145,6 +147,12 @@ This code is publicly released and is restricted by its project license
                     systemglobal.KemonoParty_Channels = _kemonoparty[0].param_data.channels;
             }
             // {"channels": [{"source": "patreon", "artist": "755183",  "channel": "806544860311846933"}]}
+            const _deviantart = systemparams_sql.filter(e => e.param_key === 'webparser.deviantart');
+            if (_deviantart.length > 0 && _deviantart[0].param_data) {
+                if (_deviantart[0].param_data.channels)
+                    systemglobal.DeviantArt_Channels = _deviantart[0].param_data.channels;
+            }
+            // {"channels": [{"artist": "booblover95",  "channel": "806544860311846933"}]}
             const _mpzerocos = systemparams_sql.filter(e => e.param_key === 'webparser.mpzero');
             if (_mpzerocos.length > 0 && _mpzerocos[0].param_data) {
                 if (_mpzerocos[0].param_data.channel)
@@ -450,6 +458,38 @@ This code is publicly released and is restricted by its project license
                     reply({success: "Missing Request - { source, artist, channel }"})
                 }
             })
+            // DeviantArt
+            if (systemglobal.DeviantArt_Channels && systemglobal.DeviantArt_Interval) {
+                if (systemglobal.DeviantArt_Channels.length > 0) {
+                    const chanenls = systemglobal.DeviantArt_Channels.filter(e => e.artist && e.channel)
+                    for (let e of chanenls) {
+                        await getDeviantUser(e.artist, e.channel);
+                        Timers.set(`DA${e.source}${e.artist}`, setInterval(async() => {
+                            await getDeviantUser(e.artist, e.channel);
+                        }, parseInt(systemglobal.DeviantArt_Interval.toString())));
+                        Logger.printLine('DeviantArt', `DeviantArt Artist Enabled: ${e.artist}`, 'info');
+                    };
+                } else {
+                    Logger.printLine('DeviantArt', `No artists were added, Ignoring`, 'error');
+                }
+            }
+            tx2.action('get_da', async function(param, reply) {
+                if (param && param.length > 0) {
+                    try {
+                        const json = JSON.parse(param);
+                        if (!(json && json.artist && json.channel)) {
+                            await getDeviantUser(json.artist, json.channel);
+                            reply({success: `OK - Completed Request: ${param}`});
+                        } else {
+                            reply({success: `Error - Missing Required Parameter: ${param}`});
+                        }
+                    } catch (e) {
+                        reply({success: `Error - ${e.message}`});
+                    }
+                } else {
+                    reply({success: "Missing Request - { artist, channel }"})
+                }
+            })
         }, 30000)
     }
 
@@ -461,6 +501,25 @@ This code is publicly released and is restricted by its project license
                     complete(true);
                 } else {
                     Logger.printLine('E-Hentai', `Failed to get a URL or destination, Ignoring`, 'error');
+                    complete(true);
+                }
+                break;
+            case "DeviantArt":
+                if (message.itemURL && message.messageChannelID) {
+                    if (message.itemURL.includes('deviantart.com/')) {
+                        if (message.itemURL.includes('/art/'))
+                            await getDeviation(message.itemURL, message.messageChannelID);
+                        else {
+                            const userId = message.itemURL.split('deviantart.com/').pop().split('/')[0];
+                            await getDeviantUser(userId, message.messageChannelID);
+                        }
+                        complete(true);
+                    } else {
+                        Logger.printLine('DeviantArt', `Failed to get a valid source URL, Ignoring`, 'error');
+                        complete(true);
+                    }
+                } else {
+                    Logger.printLine('DeviantArt', `Failed to get a URL or destination, Ignoring`, 'error');
                     complete(true);
                 }
                 break;
@@ -1211,56 +1270,51 @@ This code is publicly released and is restricted by its project license
     }
     async function getKemonoPost(source, artist, post, destionation) {
         try {
-            const history = await db.query(`SELECT * FROM web_visitedpages WHERE url LIKE '%${source}/user/${artist}%'`)
-            if (!history.error) {
-                const userProfile = await getKemonoJSON(source, artist, undefined, "profile");
-                if (userProfile && userProfile.name) {
-                    const thisArticle = await getKemonoJSON(source, artist, undefined, `post/${post}`);
-                    if (thisArticle) {
-                        if (thisArticle.attachments && thisArticle.attachments.length > 0) {
-                            Logger.printLine("KemonoParty", `New Post from "${userProfile.name}" - "${thisArticle.title}"`, "info", thisArticle)
-                            try {
-                                await Promise.all(thisArticle.attachments.map(async (image, imageIndex) => {
-                                    let title = `**🎏 ${userProfile.name} (${source})** : ***${thisArticle.title}${(thisArticle.attachments.length > 1) ? " (" + (imageIndex + 1) + "/" + thisArticle.attachments.length + ")" : ""}***\n`;
-                                    if (thisArticle.content && thisArticle.content.length > 0) {
-                                        let text = stripHtml(thisArticle.content);
-                                        if ((title.length + text.length) > 2000) {
-                                            const maxLinksLength = 2000 - (text.length - (thisArticle.real_url.length + 10));
-                                            text = text.slice(0, maxLinksLength) + " (...)";
-                                        }
-                                        title += (text + '\n');
+            const userProfile = await getKemonoJSON(source, artist, undefined, "profile");
+            if (userProfile && userProfile.name) {
+                const thisArticle = await getKemonoJSON(source, artist, undefined, `post/${post}`);
+                if (thisArticle) {
+                    if (thisArticle.attachments && thisArticle.attachments.length > 0) {
+                        Logger.printLine("KemonoParty", `New Post from "${userProfile.name}" - "${thisArticle.title}"`, "info", thisArticle)
+                        try {
+                            await Promise.all(thisArticle.attachments.map(async (image, imageIndex) => {
+                                let title = `**🎏 ${userProfile.name} (${source})** : ***${thisArticle.title}${(thisArticle.attachments.length > 1) ? " (" + (imageIndex + 1) + "/" + thisArticle.attachments.length + ")" : ""}***\n`;
+                                if (thisArticle.content && thisArticle.content.length > 0) {
+                                    let text = stripHtml(thisArticle.content);
+                                    if ((title.length + text.length) > 2000) {
+                                        const maxLinksLength = 2000 - (text.length - (thisArticle.real_url.length + 10));
+                                        text = text.slice(0, maxLinksLength) + " (...)";
                                     }
-                                    title += thisArticle.real_url;
-                                    let MessageParameters = {
-                                        messageChannelID: destionation,
-                                        messageText: title,
-                                        itemFileName: image.name,
-                                        itemFileURL: (kemonoSources.indexOf(source) !== -1 ? kemonoCDN : coomerCDN) + image.path,
-                                        itemReferral: thisArticle.real_url,
-                                        itemDateTime: thisArticle.published || thisArticle.added
-                                    }
-                                    let sendTo = systemglobal.FileWorker_In
+                                    title += (text + '\n');
+                                }
+                                title += thisArticle.real_url;
+                                let MessageParameters = {
+                                    messageChannelID: destionation,
+                                    messageText: title,
+                                    itemFileName: image.name,
+                                    itemFileURL: (kemonoSources.indexOf(source) !== -1 ? kemonoCDN : coomerCDN) + image.path,
+                                    itemReferral: thisArticle.real_url,
+                                    itemDateTime: thisArticle.published || thisArticle.added
+                                }
+                                let sendTo = systemglobal.FileWorker_In
 
-                                    mqClient.sendData(sendTo, MessageParameters, (ok) => {
-                                        if (!ok) {
-                                            mqClient.sendMessage(`Failed to send article - "${thisArticle.title}"`, "err", "SQL", thisArticle);
-                                        }
-                                    });
-                                }));
-                            } catch (err) {
-                                Logger.printLine('KemonoParty', `Failed to pull the article - ${err.message}`, 'error', err);
-                                console.log(err);
-                            }
+                                mqClient.sendData(sendTo, MessageParameters, (ok) => {
+                                    if (!ok) {
+                                        mqClient.sendMessage(`Failed to send article - "${thisArticle.title}"`, "err", "SQL", thisArticle);
+                                    }
+                                });
+                            }));
+                        } catch (err) {
+                            Logger.printLine('KemonoParty', `Failed to pull the article - ${err.message}`, 'error', err);
+                            console.log(err);
                         }
-                        await db.query(`INSERT IGNORE INTO web_visitedpages VALUES (?, NOW())`, [thisArticle.url]);
-                    } else {
-                        Logger.printLine("KemonoParty", `Failed to get "${post}/${artist}" via ${source}, please manually correct this!`, "warn")
                     }
+                    await db.query(`INSERT IGNORE INTO web_visitedpages VALUES (?, NOW())`, [thisArticle.url]);
                 } else {
-                    Logger.printLine("KemonoParty", `Failed to get user profile for "${post}/${artist}" via ${source}, Download Cancelled!`, "error")
+                    Logger.printLine("KemonoParty", `Failed to get "${post}/${artist}" via ${source}, please manually correct this!`, "warn")
                 }
             } else {
-                Logger.printLine("KemonoParty", `Failed to get history table for "${post}/${artist}" via ${source}, Download Cancelled!`, "error")
+                Logger.printLine("KemonoParty", `Failed to get user profile for "${post}/${artist}" via ${source}, Download Cancelled!`, "error")
             }
         } catch (err) {
             Logger.printLine("KemonoParty", `Failed to fetch "${post}/${artist}" via ${source}: ${err.message}`, "error", err)
@@ -1424,6 +1478,376 @@ This code is publicly released and is restricted by its project license
                 })
             })
         })
+    }
+    async function getDeviantUser(user, channelid, deep) {
+        const pageURL = `https://www.deviantart.com/${user}/gallery/all`
+        try {
+            const headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
+                "Cache-Control": "no-cache",
+                "Dnt": "1",
+                "Pragma": "no-cache",
+                "Priority": "u=0, i",
+                "Referer": pageURL,
+                "Sec-Ch-Ua": '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+                "Sec-Ch-Ua-Mobile": "?1",
+                "Sec-Ch-Ua-Platform": '"Android"',
+                "Sec-Ch-Viewport-Height": "2160",
+                "Sec-Ch-Viewport-Width": "3840",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36 Edg/125.0.0.0",
+            }
+            const headersAjax = {
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
+                "Dnt": "1",
+                "Priority": "u=0, i",
+                "Referer": pageURL,
+                "Sec-Ch-Ua": '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+                "Sec-Ch-Ua-Mobile": "?1",
+                "Sec-Ch-Ua-Platform": '"Android"',
+                "Sec-Ch-Viewport-Height": "2160",
+                "Sec-Ch-Viewport-Width": "3840",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-origin",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36 Edg/125.0.0.0",
+            }
+
+            const cookieJar = new CookieJar();
+            const initalPage = await got.get(pageURL, {
+                cookieJar,
+                headers
+            })
+            async function getCookieString(url) {
+                return new Promise((resolve, reject) => {
+                    cookieJar.getCookies(url, (err, cookies) => {
+                        if (err) {
+                            return reject('Failed to retrieve cookies:', err);
+                        }
+                        // Join cookies into a single string for use in the 'Cookie' header
+                        const cookieString = cookies.map(cookie => cookie.cookieString()).join('; ');
+                        resolve(cookieString);
+                    });
+                });
+            }
+            if (initalPage) {
+                const $_ = cheerio.load(initalPage.body);
+                const scripts = $_('script[nonce]')
+                let csrf = undefined
+                let initalResults = {}
+                // Extract the initial data from the page
+                scripts.each((i, e) => {
+                    if (e.children && e.children.length > 0 && e.children[0].data && e.children[0].data.includes('__CSRF_TOKEN__')) {
+                        const scriptContent = e.children[0].data;
+                        const initialStateMatch = scriptContent.match(/window\.__INITIAL_STATE__\s*=\s*JSON\.parse\("(.*?)"\);/s);
+                        if (initialStateMatch) {
+                            try {
+                                let jsonString = initialStateMatch[1];
+
+                                // Unescape special characters in the JSON string
+                                jsonString = jsonString
+                                    .replace(/\\"/g, '"') // Unescape double quotes
+                                    .replace(/\\\\/g, '\\') // Unescape backslashes
+                                    .replace(/\\n/g, '') // Remove newline characters
+                                    .replace(/\\'/g, "'"); // Unescape single quotes, if any
+
+                                initalResults = JSON.parse(jsonString);
+                            } catch (error) {
+                                console.error('Failed to parse initial state JSON:', error);
+                            }
+                        }
+                    }
+                });
+                if (initalResults && initalResults['@@publicSession']) {
+                    csrf = initalResults['@@publicSession'].csrfToken
+                    if (csrf && csrf.length > 5) {
+                        const history = await db.query(`SELECT * FROM web_visitedpages WHERE LOWER(url) LIKE LOWER('%deviantart.com/${user}/art/%')`)
+                        // Initial Response data is valid and we have a CSRF
+                        // Time to start extracting base metadata then get gallery
+                        const userId = Object.keys(initalResults['@@entities'].user)[0]
+                        const username = initalResults['@@entities'].user[userId].username
+                        const deviations = Object.values(initalResults['@@entities'].deviation).reverse();
+                        Logger.printLine('DeviantArtGet', `Found ${deviations.length} inital deviations for ${user}`, 'info');
+                        const cookieString = await getCookieString(pageURL);
+                        if (!history.error)
+                            Logger.printLine('DeviantArtGet', `Failed to load the history for ${user}`, 'error');
+                        else if (deviations.length > 0) {
+                            const newDeviations = deviations.filter(f => history.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0);
+                            if (newDeviations.length > 0) {
+                                await sleep(Math.floor(Math.random() * (1000 - 10000 + 1)) + 1000);
+                                let offset = 0;
+                                let emptyPage = 0;
+                                while (true) {
+                                    try {
+                                        const pageRequest = `https://www.deviantart.com/_puppy/dashared/gallection/contents?username=${username}&type=gallery&offset=${offset}&limit=50&all_folder=true&da_minor_version=20230710&csrf_token=${csrf}`
+                                        const galleryPage = await got.get(pageRequest, {
+                                            cookieJar,
+                                            headers: headersAjax
+                                        })
+                                        const json = JSON.parse(galleryPage.body);
+                                        console.log(json.results.length)
+                                        if (json.results.length > 0) {
+                                            const actualImages = json.results.filter(g => history.filter(e => e.url.toLowerCase() === g.url.toLowerCase()).length === 0 && g.type === 'image' && !g.isDeleted && !g.tierAccess);
+                                            const filteredItems = json.results.filter(f => history.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0);
+                                            Logger.printLine('DeviantArtGet', `Returned ${filteredItems.length} deviations for ${user} (Offset ${offset})`, 'debug');
+                                            await Promise.all(actualImages.map(async (g) => {
+                                                const tokens = g.media.token;
+                                                const fullImage = g.media.types.filter(h => h.t === 'fullview');
+                                                if (fullImage.length > 0 && tokens.length > 1) {
+                                                    Logger.printLine('DeviantArtGet', `New Deviation for ${user} - ${g.title}`, 'info');
+
+                                                    const imageUrl = `${g.media.baseUri}?token=${tokens[1]}`;
+                                                    const fileName = g.media.prettyName;
+                                                    let extended_meta = {}
+                                                    try {
+                                                        const imageMeta = `https://www.deviantart.com/_puppy/dadeviation/init?deviationid=${g.deviationId}&username=${username}&type=art&include_session=false&csrf_token=${csrf}&expand=deviation.related&da_minor_version=20230710`
+                                                        const imageMetadata = await got.get(imageMeta, {
+                                                            cookieJar,
+                                                            headers: headersAjax
+                                                        })
+                                                        const meta = JSON.parse(imageMetadata.body);
+                                                        if (meta && meta.deviation) {
+                                                            extended_meta = meta.deviation;
+                                                        }
+                                                    } catch (error) {
+                                                        // Log error status code and message
+                                                        Logger.printLine('DeviantArtGet', `Failed to pull the metadata (for ${g.deviationId}@${username}) - ${error.message}`, 'error', error);
+                                                        Logger.printLine('DeviantArtGet', ('Request failed with status:' + error.response?.statusCode), 'error');
+
+                                                        // Print the response body if available
+                                                        if (error.response && error.response.body) {
+                                                            console.error('Error response body:', error.response.body);
+                                                        } else {
+                                                            console.error('No response body available');
+                                                        }
+                                                    }
+
+                                                    let MessageParameters = {
+                                                        messageChannelID: channelid,
+                                                        itemFileName: fileName,
+                                                        itemFileURL: imageUrl,
+                                                        itemCookies: cookieString,
+                                                        itemReferral: g.url,
+                                                        itemDateTime: g.publishedTime
+                                                    };
+
+                                                    let text = `**🦙 ${g.title.slice(0, 500)}** : ***${username}***\n\`${g.url}\``;
+                                                    if (extended_meta && extended_meta.extended) {
+                                                        if (extended_meta.extended.tags && extended_meta.extended.tags.length > 0) {
+                                                            const tags = extended_meta.extended.tags.map(t => t.name);
+                                                            MessageParameters.messagePostTags = (';' + tags.map(e => e.split(' ').join('_')).join(';') + ';');
+                                                        }
+                                                        if (extended_meta.extended.descriptionText.excerpt && extended_meta.extended.descriptionText.excerpt.length > 1) {
+                                                            text += extended_meta.extended.descriptionText.excerpt.split('\n')
+                                                        }
+                                                    }
+                                                    MessageParameters.messageText = text;
+
+                                                    let sendTo = systemglobal.FileWorker_In
+
+                                                    mqClient.sendData(sendTo, MessageParameters, (ok) => {
+                                                        if (!ok) {
+                                                            mqClient.sendMessage(`Failed to send article - "${g.title}"`, "err", "MQ", MessageParameters);
+                                                        }
+                                                    });
+
+                                                    await db.query(`INSERT IGNORE INTO web_visitedpages VALUES (?, NOW())`, [g.url.toLowerCase()]);
+                                                    await sleep(Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000);
+                                                }
+                                            }));
+                                            if (filteredItems.length === 0)
+                                                emptyPage++;
+                                            if (emptyPage > 2 && !deep)
+                                                break;
+                                            if (!json.hasMore)
+                                                break;
+                                            offset = json.nextOffset;
+                                        } else
+                                            break;
+                                    } catch (error) {
+                                        Logger.printLine('DeviantArtGet', `Failed to pull the gallery page (for ${user}) - ${error.message}`, 'error', error);
+                                        Logger.printLine('DeviantArtGet', ('Request failed with status:' + error.response?.statusCode), 'error');
+
+                                        if (error.response && error.response.body) {
+                                            console.error('Error response body:', error.response.body);
+                                        } else {
+                                            console.error('No response body available');
+                                        }
+                                        break;
+                                    }
+                                    await sleep(Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000);
+                                }
+                            } else
+                                Logger.printLine('DeviantArtGet', `No new deviations for ${user}`, 'info');
+                        } else
+                            Logger.printLine('DeviantArtGet', `Did not get any deviations (for ${user})`, 'error');
+                    } else
+                        Logger.printLine('DeviantArtGet', `Did not get a CSRF, Are you blocked? (for ${user})`, 'error');
+                } else
+                    Logger.printLine('DeviantArtGet', `Initial Page does not contain required script data, prob blocked? (for ${user})`, 'error');
+            } else
+                Logger.printLine('DeviantArtGet', `Failed to pull the initial page (for ${user})`, 'error');
+        } catch (error) {
+            // Log error status code and message
+            Logger.printLine('DeviantArtGet', `Failed to pull the initial page (for ${user}) - ${error.message}`, 'error', error);
+            Logger.printLine('DeviantArtGet', ('Request failed with status:' + error.response?.statusCode), 'error');
+
+            // Print the response body if available
+            if (error.response && error.response.body)
+                console.error('Error response body:', error.response.body);
+            else
+                console.error('No response body available');
+        }
+    }
+    async function getDeviation(pageURL, channelid) {
+        try {
+            const headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
+                "Cache-Control": "no-cache",
+                "Dnt": "1",
+                "Pragma": "no-cache",
+                "Priority": "u=0, i",
+                "Referer": pageURL,
+                "Sec-Ch-Ua": '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+                "Sec-Ch-Ua-Mobile": "?1",
+                "Sec-Ch-Ua-Platform": '"Android"',
+                "Sec-Ch-Viewport-Height": "2160",
+                "Sec-Ch-Viewport-Width": "3840",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36 Edg/125.0.0.0",
+            }
+
+            const cookieJar = new CookieJar();
+            const initalPage = await got.get(pageURL, {
+                cookieJar,
+                headers
+            })
+            async function getCookieString(url) {
+                return new Promise((resolve, reject) => {
+                    cookieJar.getCookies(url, (err, cookies) => {
+                        if (err) {
+                            return reject('Failed to retrieve cookies:', err);
+                        }
+                        // Join cookies into a single string for use in the 'Cookie' header
+                        const cookieString = cookies.map(cookie => cookie.cookieString()).join('; ');
+                        resolve(cookieString);
+                    });
+                });
+            }
+            if (initalPage) {
+                const $_ = cheerio.load(initalPage.body);
+                const scripts = $_('script[nonce]')
+                let csrf = undefined
+                let initalResults = {}
+                // Extract the initial data from the page
+                scripts.each((i, e) => {
+                    if (e.children && e.children.length > 0 && e.children[0].data && e.children[0].data.includes('__CSRF_TOKEN__')) {
+                        const scriptContent = e.children[0].data;
+                        const initialStateMatch = scriptContent.match(/window\.__INITIAL_STATE__\s*=\s*JSON\.parse\("(.*?)"\);/s);
+                        if (initialStateMatch) {
+                            try {
+                                let jsonString = initialStateMatch[1];
+
+                                // Unescape special characters in the JSON string
+                                jsonString = jsonString
+                                    .replace(/\\"/g, '"') // Unescape double quotes
+                                    .replace(/\\\\/g, '\\') // Unescape backslashes
+                                    .replace(/\\n/g, '') // Remove newline characters
+                                    .replace(/\\'/g, "'"); // Unescape single quotes, if any
+
+                                initalResults = JSON.parse(jsonString);
+                            } catch (error) {
+                                console.error('Failed to parse initial state JSON:', error);
+                            }
+                        }
+                    }
+                });
+                if (initalResults && initalResults['@@publicSession']) {
+                    csrf = initalResults['@@publicSession'].csrfToken
+                    if (csrf && csrf.length > 5) {
+                        const history = await db.query(`SELECT * FROM web_visitedpages WHERE LOWER(url) LIKE LOWER('${pageURL}')`)
+                        // Initial Response data is valid and we have a CSRF
+                        // Time to start extracting base metadata then get gallery
+                        const userId = Object.keys(initalResults['@@entities'].user)[0]
+                        const username = initalResults['@@entities'].user[userId].username
+                        const deviations = Object.values(initalResults['@@entities'].deviation).filter(f => history.filter(e => e.url.toLowerCase() === f.url.toLowerCase()).length === 0 && f.type === 'image' && !f.isDeleted && !f.tierAccess).reverse();
+                        Logger.printLine('DeviantArtGet', `Found ${deviations.length} initial deviations for ${pageURL}`, 'info');
+                        const cookieString = await getCookieString(pageURL);
+                        if (!history.error)
+                            Logger.printLine('DeviantArtGet', `Failed to load the history for ${pageURL}`, 'error');
+                        else if (deviations.length > 0) {
+                            const g = deviations[0];
+                            const tokens = g.media.token;
+                            const fullImage = g.media.types.filter(h => h.t === 'fullview');
+                            if (fullImage.length > 0 && tokens.length > 1) {
+                                Logger.printLine('DeviantArtGet', `New Deviation for ${username} - ${g.title}`, 'info');
+
+                                const imageUrl = `${g.media.baseUri}?token=${tokens[1]}`;
+                                const fileName = g.media.prettyName;
+                                let extended_meta = Object.values(initalResults['@@entities'].deviationExtended)[0];
+
+                                let MessageParameters = {
+                                    messageChannelID: channelid,
+                                    itemFileName: fileName,
+                                    itemFileURL: imageUrl,
+                                    itemCookies: cookieString,
+                                    itemReferral: g.url,
+                                    itemDateTime: g.publishedTime
+                                };
+
+                                let text = `**🦙 ${g.title.slice(0, 500)}** : ***${username}***\n\`${g.url}\``;
+                                if (extended_meta) {
+                                    if (extended_meta.tags && extended_meta.tags.length > 0) {
+                                        const tags = extended_meta.tags.map(t => t.name);
+                                        MessageParameters.messagePostTags = (';' + tags.map(e => e.split(' ').join('_')).join(';') + ';');
+                                    }
+                                    if (extended_meta.descriptionText.excerpt && extended_meta.descriptionText.excerpt.length > 1) {
+                                        text += extended_meta.descriptionText.excerpt.split('\n')
+                                    }
+                                }
+                                MessageParameters.messageText = text;
+
+                                let sendTo = systemglobal.FileWorker_In
+
+                                mqClient.sendData(sendTo, MessageParameters, (ok) => {
+                                    if (!ok) {
+                                        mqClient.sendMessage(`Failed to send article - "${g.title}"`, "err", "MQ", MessageParameters);
+                                    }
+                                });
+
+                                await db.query(`INSERT IGNORE INTO web_visitedpages VALUES (?, NOW())`, [g.url.toLowerCase()]);
+                                await sleep(Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000);
+                            }
+                        } else
+                            Logger.printLine('DeviantArtGet', `Did not get any deviations (for ${pageURL})`, 'error');
+                    } else
+                        Logger.printLine('DeviantArtGet', `Did not get a CSRF, Are you blocked? (for ${pageURL})`, 'error');
+                } else
+                    Logger.printLine('DeviantArtGet', `Initial Page does not contain required script data, prob blocked? (for ${pageURL})`, 'error');
+            } else
+                Logger.printLine('DeviantArtGet', `Failed to pull the initial page (for ${pageURL})`, 'error');
+        } catch (error) {
+            // Log error status code and message
+            Logger.printLine('DeviantArtGet', `Failed to pull the initial page (for ${pageURL}) - ${error.message}`, 'error', error);
+            Logger.printLine('DeviantArtGet', ('Request failed with status:' + error.response?.statusCode), 'error');
+
+            // Print the response body if available
+            if (error.response && error.response.body)
+                console.error('Error response body:', error.response.body);
+            else
+                console.error('No response body available');
+        }
     }
 
     start();

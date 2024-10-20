@@ -2341,7 +2341,7 @@ This code is publicly released and is restricted by its project license
         }
         let preview = false;
         const contents = {
-            content: (MessageContents.messageText && MessageContents.messageText.trim().length > 0) ? MessageContents.messageText.trim() : undefined,
+            content: (MessageContents.messageText && MessageContents.messageText.trim().length > 0) ? MessageContents.messageText.trim().substring(0,1999) : undefined,
             embed: (MessageContents.messageObject) ? MessageContents.messageObject : undefined,
             tts: (MessageContents.messageTTS)
         };
@@ -4740,7 +4740,7 @@ This code is publicly released and is restricted by its project license
                 sendto = channel
             }
             discordClient.createMessage(sendto, {
-                content: message.substring(0,255) + errmessage
+                content: message.substring(0,255) + errmessage.substring(0,1250)
             })
                 .catch((er) => {
                     Logger.printLine("Discord", `Failed to send Message: ${er.message}`, "critical", er)
@@ -4763,7 +4763,7 @@ This code is publicly released and is restricted by its project license
             }
 
             discordClient.createMessage(sendto, {
-                content: message.substring(0,255) + errmessage
+                content: message.substring(0,255) + errmessage.substring(0,1250)
             })
                 .catch((er) => {
                     Logger.printLine("Discord", `Failed to send Message: ${er.message}`, "critical", er)
@@ -6885,6 +6885,21 @@ This code is publicly released and is restricted by its project license
                             }, 2500)
                         }
                     })
+                } else if (urlItem.includes("deviantart.com/")) {
+                    mqClient.sendData(systemglobal.WebParser_In, {
+                        messageChannelID: moveTo,
+                        itemURL: urlItem,
+                        messageIntent: "DeviantArt"
+                    }, function (ok) {
+                        if (ok) {
+                            setTimeout(function () {
+                                discordClient.deleteMessage(msg.channel.id, msg.id, "Clean out download request")
+                                    .catch(function (err) {
+                                        Logger.printLine("DownloadMgr", `Failed to remove download request`, 'error', err)
+                                    })
+                            }, 2500)
+                        }
+                    })
                 } else if (urlItem.includes("//e-hentai.org/")) {
                     mqClient.sendData(systemglobal.WebParser_In + '.sync', {
                         messageChannelID: moveTo,
@@ -7176,7 +7191,7 @@ This code is publicly released and is restricted by its project license
                         }
 
                         try {
-                            const data = await discordClient.createMessage(moveTo, {content: `${messagecontent}`}, messagefiles)
+                            const data = await discordClient.createMessage(moveTo, {content: `${messagecontent.substring(0,1999)}`}, messagefiles)
                             await messageUpdate(data, {
                                 channel: message.channel.id,
                                 id: message.id,

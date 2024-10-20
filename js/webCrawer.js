@@ -1644,7 +1644,7 @@ This code is publicly released and is restricted by its project license
                                                             MessageParameters.messagePostTags = (';' + tags.map(e => e.split(' ').join('_')).join(';') + ';');
                                                         }
                                                         if (extended_meta.extended.descriptionText.excerpt && extended_meta.extended.descriptionText.excerpt.length > 1) {
-                                                            text += extended_meta.extended.descriptionText.excerpt.split('\n')
+                                                            text += '\n' + extended_meta.extended.descriptionText.excerpt.split('\n')
                                                         }
                                                     }
                                                     MessageParameters.messageText = text;
@@ -1813,7 +1813,7 @@ This code is publicly released and is restricted by its project license
                                         MessageParameters.messagePostTags = (';' + tags.map(e => e.split(' ').join('_')).join(';') + ';');
                                     }
                                     if (extended_meta.descriptionText.excerpt && extended_meta.descriptionText.excerpt.length > 1) {
-                                        text += extended_meta.descriptionText.excerpt.split('\n')
+                                        text += '\n' + extended_meta.descriptionText.excerpt.split('\n')
                                     }
                                 }
                                 MessageParameters.messageText = text;

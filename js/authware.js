@@ -1447,7 +1447,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
         if (!thisUser) {
             Logger.printLine("SequenziaCache", `Successfully updated user caches`, "info")
-            sequenziaAccountUpdateTimer = setTimeout(sequenziaUserCacheGenerator, 300000);
+            sequenziaAccountUpdateTimer = setTimeout(sequenziaUserCacheGenerator, 1800000);
             if (systemglobal.sequenzia_server_list) {
                 systemglobal.sequenzia_server_list.forEach(s => {
                     request.get(`http://${s}/internal/refresh/database`, async (err, res) => {

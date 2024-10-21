@@ -8186,7 +8186,7 @@ This code is publicly released and is restricted by its project license
                                     return 80
                                 else if (_n === 'iso' || _n === 'bin' || _n === 'cd' || _n === 'img') // Archive Disk
                                     return 81
-                                return 0;
+                                return 255;
                             })(sqlObject.real_filename, sqlObject.attachment_name)
                             if (options && options.post_tags) {
                                 sqlObject.post_tags = options.post_tags;

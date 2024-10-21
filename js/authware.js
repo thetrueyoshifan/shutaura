@@ -1594,7 +1594,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             }))
             await Promise.all(Array.from(guild.members.keys()).map(async (memberID) => {
                 const member = guild.members.get(memberID)
-                await memberRoleGeneration(guild, member, true);
+                await memberRoleGeneration(guild, member);
             }))
         }))
         await updateLocalCache();

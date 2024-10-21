@@ -911,6 +911,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
     let sequenziaAccountUpdateTimer = null;
     async function sequenziaUserCacheGenerator(thisUser) {
+        if (!thisUser && systemglobal.Connected_Exchanges) {
+            await refreshRemoteExchanges();
+        }
         if (sequenziaAccountUpdateTimer) {
             clearTimeout(sequenziaAccountUpdateTimer);
             sequenziaAccountUpdateTimer = null;
@@ -1525,7 +1528,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             }, Promise.resolve());
             requests.then(() => {
                 Logger.printLine("Exchange", `Successfully updated remote exchanges`, "info")
-                setTimeout(refreshRemoteExchanges, 300000);
             })
         }
     }
@@ -1594,16 +1596,11 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                 }))
                 await Promise.all(Array.from(guild.members.keys()).map(async (memberID) => {
                     const member = guild.members.get(memberID)
-                    await memberRoleGeneration(guild, member);
+                    await memberRoleGeneration(guild, member, true);
                 }))
             }))
         }
         await updateLocalCache();
-        if (init === 0 && systemglobal.Connected_Exchanges) {
-            await refreshRemoteExchanges();
-        } else {
-            Logger.printLine("Discord", "No Remote Exchnages to Sync", "debug");
-        }
         if (enableListening)
             await sequenziaUserCacheGenerator();
         init = 1;

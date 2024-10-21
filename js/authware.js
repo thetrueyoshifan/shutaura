@@ -1451,7 +1451,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             if (systemglobal.sequenzia_server_list) {
                 systemglobal.sequenzia_server_list.forEach(s => {
                     request.get({
-                        url: `http://${s}/internal/refresh/database`
+                        url: `http://${s}/internal/refresh/database`,
                         headers: {
                             'User-Agent': 'AuthWare/22.0'
                         }

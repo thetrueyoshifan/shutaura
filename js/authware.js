@@ -1453,7 +1453,9 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                     await new Promise(ok => {
                         request.get(`http://${server}/internal/refresh/database`, async (err, res) => {
                             if (err || res && res.statusCode !== undefined && res.statusCode !== 200) {
-                                console.error(`Failed to contact downstream Sequenzia server`);
+                                console.error(`Failed to contact downstream Sequenzia server: ${server}`);
+                            } else {
+                                console.log(`Updated downstream Sequenzia server: ${server}`);
                             }
                             ok();
                         })

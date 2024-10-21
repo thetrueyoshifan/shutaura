@@ -142,6 +142,8 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                     systemglobal.web_applications = _seq_config[0].param_data.web_applications;
                 if (_seq_config[0].param_data.review_channels)
                     systemglobal.review_channels = _seq_config[0].param_data.review_channels;
+                if (_seq_config[0].param_data.server_list)
+                    systemglobal.sequenzia_server_list = _seq_config[0].param_data.server_list;
             }
             const _backup_config = systemparams_sql.filter(e => e.param_key === 'seq.cdn');
             if (_backup_config.length > 0 && _backup_config[0].param_data) {
@@ -995,7 +997,8 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             }
         })
 
-        allUserIds.filter(f => !thisUser || (thisUser && f === thisUser)).map(async userId => {
+        const users = allUserIds.filter(f => !thisUser || (thisUser && f === thisUser))
+        for (let userId of users) {
             const sidebarViewsqlFields = [
                 `kanmi_auth_${userId}.cid`,
                 `kanmi_auth_${userId}.channelid`,
@@ -1439,11 +1442,24 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             ])
             await db.query(`DELETE FROM sequenzia_user_cache WHERE userid NOT IN (SELECT id AS userid FROM discord_users)`)
             await db.query(`DELETE FROM sequenzia_user_config WHERE id NOT IN (SELECT id FROM discord_users)`)
-            Logger.printLine("SequenziaCache", `Successfully user account (${userAccount.discord.user.name || userAccount.discord.user.username}) cache data`, "info")
-        });
+            Logger.printLine("SequenziaCache", `Successfully user account (${userAccount.discord.user.name || userAccount.discord.user.username}) cache data`, "debug")
+        }
 
         if (!thisUser) {
+            Logger.printLine("SequenziaCache", `Successfully updated user caches`, "info")
             sequenziaAccountUpdateTimer = setTimeout(sequenziaUserCacheGenerator, 300000);
+            if (systemglobal.sequenzia_server_list) {
+                for (let server in systemglobal.sequenzia_server_list) {
+                    await Promise(ok => {
+                        request.get(`http://${server}/internal/refresh/database`, async (err, res) => {
+                            if (err || res && res.statusCode !== undefined && res.statusCode !== 200) {
+                                console.error(`Failed to contact downstream Sequenzia server`);
+                            }
+                            ok();
+                        })
+                    })
+                }
+            }
         }
     }
     app.get('/refresh/sequenzia', async (req, res) => {

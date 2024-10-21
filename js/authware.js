@@ -1436,6 +1436,7 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             ])
             await db.query(`DELETE FROM sequenzia_user_cache WHERE userid NOT IN (SELECT id AS userid FROM discord_users)`)
             await db.query(`DELETE FROM sequenzia_user_config WHERE id NOT IN (SELECT id FROM discord_users)`)
+            Logger.printLine("SequenziaCache", `Successfully user account (${userAccount.discord.user.name || userAccount.discord.user.username}) cache data`, "info")
         });
 
         if (!thisUser) {

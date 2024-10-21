@@ -8160,13 +8160,13 @@ This code is publicly released and is restricted by its project license
                                     return 1
                                 else if (_n === 'png') // PNG
                                     return 2
-                                else if (_n === 'tiff') // TIFF
+                                else if (_n.startsWith('tif')) // TIFF
                                     return 3
                                 else if (_n === 'bmp') // Bitmap
                                     return 4
                                 else if (_n === 'webp') // WebP
                                     return 5
-                                else if (_n === 'heif') // HEIF
+                                else if (_n === 'heif' || _n === 'heic') // HEIF
                                     return 6
                                 else if (_n.startsWith('gif')) // GIF
                                     return 10
@@ -8180,10 +8180,14 @@ This code is publicly released and is restricted by its project license
                                     return 41
                                 else if (_n === 'psd' || _n === 'psb') // Photoshop
                                     return 50
-                                else if (_n.startsWith('unity') || _n === 'material' || _n === 'shader' || _n === 'vrca') // Unity Format
+                                else if (_n.startsWith('unity') || _n.startsWith('anim') || _n === 'material' || _n === 'prefab' || _n === 'shader' || _n === 'vrca' || _n === 'vrcw') // Unity Format
                                     return 61
-                                else if (_n === 'fbx' || _n === 'dae' || _n === 'obj' || _n.startsWith('c4')) // 3D Format
+                                else if (_n.startsWith('blend') || _n === 'fbx' || _n === 'dae' || _n === 'obj' || _n === '3mf' || _n === '3ds' || _n === 'std' || _n.startsWith('c4')) // 3D Format
                                     return 62
+                                else if (_n === 'txt' || _n === 'rtf' || _n === 'json' || _n === 'xml' || _n === 'html' || _n === 'pdf' || _n.startsWith('doc')) // Text Formats
+                                    return 69
+                                else if (_n === 'exe' || _n === 'msi' || _n === 'dmg' || _n === 'hex' || _n === 'dll' || _n === 'bat' || _n === 'sh' || _n === 'bash' || _n === 'reg' || _n === 'ps1'  || _n === 'cab') // Executables
+                                    return 70
                                 else if (_n === 'zip' || _n === 'tar' || _n === 'rar' || _n.startsWith('7z') || _n.startsWith('bz')) // Archive
                                     return 80
                                 else if (_n === 'iso' || _n === 'bin' || _n === 'cd' || _n === 'img') // Archive Disk

@@ -1449,12 +1449,12 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
             Logger.printLine("SequenziaCache", `Successfully updated user caches`, "info")
             sequenziaAccountUpdateTimer = setTimeout(sequenziaUserCacheGenerator, 300000);
             if (systemglobal.sequenzia_server_list) {
-                systemglobal.sequenzia_server_list.forEach(server => {
-                    request.get(`http://${server}/internal/refresh/database`, async (err, res) => {
+                systemglobal.sequenzia_server_list.forEach(s => {
+                    request.get(`http://${s}/internal/refresh/database`, async (err, res) => {
                         if (err || res && res.statusCode !== undefined && res.statusCode !== 200) {
-                            console.error(`Failed to contact downstream Sequenzia server: ${server}`);
+                            console.error(`Failed to contact downstream Sequenzia server: ${s}`);
                         } else {
-                            console.log(`Updated downstream Sequenzia server: ${server}`);
+                            console.log(`Updated downstream Sequenzia server: ${s}`);
                         }
                     })
                 })

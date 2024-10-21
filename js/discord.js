@@ -8152,8 +8152,10 @@ This code is publicly released and is restricted by its project license
                                 sqlObject.colorB = options.color.value[2];
                                 sqlObject.dark_color = options.color.isDark;
                             }
-                            sqlObject.attachment_type = ((r,n) => {
-                                const _n = (r || n).split('.').pop().toLowerCase()
+                            sqlObject.attachment_type = (n => {
+                                if (n === null)
+                                    return null;
+                                const _n = n.split('.').pop().toLowerCase()
                                 if (_n.startsWith('jp') || _n === 'jfif') // JPEG
                                     return 1
                                 else if (_n === 'png') // PNG
@@ -8187,7 +8189,7 @@ This code is publicly released and is restricted by its project license
                                 else if (_n === 'iso' || _n === 'bin' || _n === 'cd' || _n === 'img') // Archive Disk
                                     return 81
                                 return 255;
-                            })(sqlObject.real_filename, sqlObject.attachment_name)
+                            })(sqlObject.real_filename || sqlObject.attachment_name)
                             if (options && options.post_tags) {
                                 sqlObject.post_tags = options.post_tags;
                             }

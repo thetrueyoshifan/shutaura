@@ -8153,7 +8153,7 @@ This code is publicly released and is restricted by its project license
                                 sqlObject.dark_color = options.color.isDark;
                             }
                             sqlObject.attachment_type = (n => {
-                                if (n === null)
+                                if (!n)
                                     return null;
                                 const _n = n.split('.').pop().toLowerCase()
                                 if (_n.startsWith('jp') || _n === 'jfif') // JPEG

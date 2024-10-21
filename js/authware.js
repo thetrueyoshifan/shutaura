@@ -1456,7 +1456,6 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
                         } else {
                             console.log(`Updated downstream Sequenzia server: ${server}`);
                         }
-                        ok();
                     })
                 })
             }

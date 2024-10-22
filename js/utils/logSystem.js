@@ -25,7 +25,7 @@ module.exports = function (facility, options) {
         };
         logServerConn.onmessage = (event) => { handleIncomingMessage(event); };
         logServerConn.onclose = () => {
-            console.log('[LogServer] Disconnected from the server');
+            //console.log('[LogServer] Disconnected from the server');
             logServerisConnected = false;
             reconnectToWebSocket(serverUrl);
         };
@@ -36,7 +36,7 @@ module.exports = function (facility, options) {
         };
     }
     function reconnectToWebSocket(serverUrl) {
-        console.log('[LogServer] Attempting to reconnect...');
+        //console.log('[LogServer] Attempting to reconnect...');
         setTimeout(() => {
             connectToWebSocket(serverUrl);
         }, 1000); // Reconnect attempt after 1 second
@@ -69,14 +69,14 @@ module.exports = function (facility, options) {
         };
         if (!no_ack)
             unsentLogs[logId] = logEntry;
-        if (logServerisConnected)
+        if (logServerisConnected && logServerConn.readyState === WebSocket.OPEN)
             logServerConn.send(JSON.stringify(logEntry));
     }
 
     if (systemglobal.LogServer) {
             remoteLogger = true
             connectToWebSocket('ws://' + systemglobal.LogServer);
-            sendLog('Init', `Init : Forwarding logs to Graylog Server 1`, 'debug');
+            sendLog('Init', `Init : Forwarding logs to Othinus Server`, 'debug');
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][Init] Forwarding logs to Othinus Server - ${facility}`.gray);
     }
     function flushUnsentLogs() {

@@ -76,7 +76,7 @@ module.exports = function (facility, options) {
     if (systemglobal.LogServer) {
             remoteLogger = true
             connectToWebSocket('ws://' + systemglobal.LogServer);
-            sendLog('Init', `Init : Forwarding logs to Othinus Server`, 'debug');
+            sendLog('Init', `Forwarding logs to Othinus Server`, 'debug');
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][Init] Forwarding logs to Othinus Server - ${facility}`.gray);
     }
     function flushUnsentLogs() {
@@ -104,7 +104,7 @@ module.exports = function (facility, options) {
             logClient = proccess
         }
         logObject.process = logClient
-        let logString =  `${logClient} : ${text}`
+        let logString =  `${text}`
         if (typeof object !== 'undefined' || (object && object !== null)) {
             if ( (typeof (object) === 'string' || typeof (object) === 'number' || object instanceof String) ) {
                 logString += ` : ${object}`
@@ -219,7 +219,7 @@ module.exports = function (facility, options) {
         console.log(err)
         console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][uncaughtException] ${err.message}`.bgRed);
         if (remoteLogger)
-            sendLog('Node', `uncaughtException : ${err.message}`, 'critical');
+            sendLog('uncaughtException', `${err.message}`, 'critical');
     });
 
     return module;

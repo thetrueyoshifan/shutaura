@@ -51,7 +51,7 @@ module.exports = function (facility, options) {
             console.error('[LogServer] Error parsing message:', error);
         }
     }
-    function sendLog(proccess, text, level = 'debug', object, object2, no_ack = false) {
+    function sendLog(proccess, text, level = 'debug', object, object2, color, no_ack = false) {
         const logId = generateLogId();
         const logEntry = {
             id: logId,
@@ -60,6 +60,7 @@ module.exports = function (facility, options) {
             time: new Date().valueOf(),
             server_name: systemglobal.SystemName,
             name: facility,
+            color,
             proccess,
             ack: !no_ack,
             extended: {
@@ -152,7 +153,7 @@ module.exports = function (facility, options) {
                 console.error(object2)
         } else if (level === "critical" || level === "crit") {
             if (remoteLogger)
-                sendLog(logObject.process, logString, 'critical', logObject);
+                sendLog(logObject.process, logString, 'critical', logObject);``
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.bgMagenta)
             if (object)
                 console.error(object)
@@ -195,16 +196,22 @@ module.exports = function (facility, options) {
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.gray)
             }
         } else if (level === "info") {
-            if (remoteLogger)
-                sendLog(logObject.process, logString, 'info', logObject);
             if (systemglobal.log_objects) { console.log(logObject) }
             if (text.includes("Sent message to ") || text.includes("Connected to Kanmi Exchange as ")) {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'info', logObject, undefined, 'gray');
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.gray)
             } else if (text.includes('New Media Tweet in')) {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'info', logObject, undefined, 'green');
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgGreen)
             } else if (text.includes('New Text Tweet in')) {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'info', logObject, undefined, 'green');
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgGreen)
             } else {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'info', logObject);
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.cyan.bgBlack)
             }
         } else {

@@ -1157,11 +1157,16 @@ docutrol@acr.moe - 301-399-3671 - docs.acr.moe/docutrol
 
                 await db.query(`CREATE OR REPLACE VIEW kanmi_sidebar_${userId} AS SELECT x.*, y.virtual_channel_name, y.virtual_channel_uri, y.virtual_channel_description FROM (SELECT ${sidebarViewsqlFields} FROM ${sidebarViewsqlTables} WHERE ${sidebarViewsqlWhere}) x LEFT OUTER JOIN (SELECT virtual_cid AS virtual_channel_eid, name AS virtual_channel_name, uri AS virtual_channel_uri, description AS virtual_channel_description FROM kanmi_virtual_channels) y ON (x.virtual_channel_eid = y.virtual_channel_eid) ORDER BY ${sidebarViewsqlOrderBy}`);
 
-                await db.query(`START TRANSACTION;
-                                CREATE TABLE IF NOT EXISTS ZENLESS__auth_${userId} AS SELECT * FROM kanmi_auth_${userId} WHERE 1=0;
-                                TRUNCATE TABLE ZENLESS__auth_${userId};
-                                INSERT INTO ZENLESS__auth_${userId} SELECT * FROM kanmi_auth_${userId};
-                                COMMIT;`)
+                const tableFill = [
+                    `START TRANSACTION;`,
+                    `CREATE TABLE IF NOT EXISTS ZENLESS__auth_${userId} AS SELECT * FROM kanmi_auth_${userId} WHERE 1=0;`,
+                    `TRUNCATE TABLE ZENLESS__auth_${userId};`,
+                    `INSERT INTO ZENLESS__auth_${userId} SELECT * FROM kanmi_auth_${userId};`,
+                    `COMMIT;`
+                ]
+                for (let c of tableFill) {
+                    await db.query(c)
+                }
 
                 const tempLastEpisode = await db.query(`SELECT Max(y.eid) AS eid, MAX(y.show_id) AS show_id FROM (SELECT * FROM kanmi_system.kongou_watch_history WHERE user = '${userId}' ORDER BY date DESC LIMIT 1) x LEFT JOIN (SELECT * FROM kanmi_system.kongou_episodes) y ON (x.eid = y.eid);`)
 

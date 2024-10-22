@@ -10,6 +10,7 @@ let logServerisConnected = false;
 let unsentLogs = {};
 let rollingIndex = 0;
 let remoteLogger = false;
+let flushTimeout;
 
 module.exports = function (facility, options) {
     let module = {};
@@ -19,7 +20,8 @@ module.exports = function (facility, options) {
         logServerConn.onopen = () => {
             console.log('[LogServer] Connected to the server');
             logServerisConnected = true;
-            flushUnsentLogs();
+            clearTimeout(flushTimeout);
+            flushTimeout = setTimeout(flushUnsentLogs, 5000);
         };
         logServerConn.onmessage = (event) => { handleIncomingMessage(event); };
         logServerConn.onclose = () => {
@@ -78,9 +80,14 @@ module.exports = function (facility, options) {
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][Init] Forwarding logs to Othinus Server - ${facility}`.gray);
     }
     function flushUnsentLogs() {
-        if (logServerisConnected) {
+        if (logServerisConnected && logServerConn.readyState === WebSocket.OPEN) {
             for (const logId in unsentLogs) {
-                logServerConn.send(JSON.stringify(unsentLogs[logId]));
+                try {
+                    logServerConn.send(JSON.stringify(unsentLogs[logId]));
+                } catch (error) {
+                    console.error(`[LogServer] Failed to send log ${logId}:`, error);
+                    break; // Stop flushing if sending fails
+                }
             }
         }
     }

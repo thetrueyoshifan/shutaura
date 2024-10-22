@@ -67,6 +67,38 @@ module.exports = function (facility, options) {
             }
         }
     }
+    module.transaction = async function (queries) {
+        // Ensure queries is an array of objects with 'sql' and optional 'params'
+        if (!Array.isArray(queries)) {
+            throw new Error("Queries should be an array");
+        }
+
+        try {
+            // Start the transaction
+            await sqlPromise.query('START TRANSACTION');
+
+            // Execute each query in sequence
+            for (const { sql, params } of queries) {
+                await sqlPromise.query(sql, params || []);
+            }
+
+            // Commit the transaction if all queries succeed
+            await sqlPromise.query('COMMIT');
+
+            return { success: true, message: 'Transaction completed successfully' };
+        } catch (error) {
+            // Rollback the transaction in case of any error
+            await sqlPromise.query('ROLLBACK');
+            Logger.printLine("SQL Transaction", error.message, "error", error);
+            console.error("Error in transaction:", error);
+
+            return {
+                success: false,
+                message: 'Transaction rolled back due to error',
+                error
+            };
+        }
+    }
 
     process.on('uncaughtException', function(err) {
         Logger.printLine("uncaughtException", err.message, "critical", err);

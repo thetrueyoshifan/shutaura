@@ -3,45 +3,93 @@
 
 const systemglobal = require('../../config.json');
 const colors = require('colors');
-const { hostname } = require("os");
 const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
-const graylog2 = require("graylog2");
-let logger1 = undefined
-let logger2 = undefined
-let remoteLogging1 = false
-let remoteLogging2 = false
+let logServerConn;
+let logServerisConnected = false;
+let unsentLogs = {};
+let rollingIndex = 0;
+let remoteLogger = false;
 
 module.exports = function (facility, options) {
     let module = {};
-    if (systemglobal.LogServer && systemglobal.LogServer.length > 0) {
-        if (systemglobal.LogServer.length >= 1) {
-            remoteLogging1 = true
-            logger1 = new graylog2.graylog({
-                servers: [systemglobal.LogServer[0]],
-                hostname: hostname(),
-                facility: facility,
-                bufferSize: 1350
-            });
-            logger1.on('error', (error) => { console.error('Error while trying to write to graylog host NJA:'.red, error) });
+    function connectToWebSocket(serverUrl) {
+        logServerConn = new WebSocket(serverUrl);
 
-            logger1.debug(`Init : Forwarding logs to Graylog Server 1`, { process: 'Init' });
-            console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][Init] Forwarding logs to Graylog Server 1 - ${facility}`.gray);
-        }
-        if (systemglobal.LogServer.length >= 2) {
-            remoteLogging2 = true
-            logger2 = new graylog2.graylog({
-                servers: [systemglobal.LogServer[1]],
-                hostname: hostname(),
-                facility: facility,
-                bufferSize: 1350
-            });
-            logger2.on('error', (error) => { console.error('Error while trying to write to graylog host END:'.red, error) });
-
-            logger1.debug(`Init : Forwarding logs to Graylog Server 2`, { process: 'Init' });
-            console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][Init] Forwarding logs to Graylog Server 2 - ${facility}`.gray);
+        logServerConn.onopen = () => {
+            console.log('[LogServer] Connected to the server');
+            logServerisConnected = true;
+            flushUnsentLogs();
+        };
+        logServerConn.onmessage = (event) => { handleIncomingMessage(event); };
+        logServerConn.onclose = () => {
+            console.log('[LogServer] Disconnected from the server');
+            logServerisConnected = false;
+            reconnectToWebSocket(serverUrl);
+        };
+        logServerConn.onerror = (error) => {
+            console.error('[LogServer] Error:', error);
+            logServerisConnected = false;
+            logServerConn.close();
+        };
+    }
+    function reconnectToWebSocket(serverUrl) {
+        console.log('[LogServer] Attempting to reconnect...');
+        setTimeout(() => {
+            connectToWebSocket(serverUrl);
+        }, 1000); // Reconnect attempt after 1 second
+    }
+    function handleIncomingMessage(event) {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.ack) {
+                delete unsentLogs[data.id];
+            }
+        } catch (error) {
+            console.error('[LogServer] Error parsing message:', error);
         }
     }
-    module.printLine = async function printLine(proccess, text, level, object, object2) {
+    function sendLog(proccess, text, level = 'debug', object, object2, no_ack = false) {
+        const logId = generateLogId();
+        const logEntry = {
+            id: logId,
+            message: text,
+            level,
+            time: new Date().valueOf(),
+            server_name: systemglobal.SystemName,
+            name: facility,
+            proccess,
+            ack: !no_ack,
+            extended: {
+                object,
+                object2
+            }
+        };
+        if (!no_ack)
+            unsentLogs[logId] = logEntry;
+        if (logServerisConnected)
+            logServerConn.send(JSON.stringify(logEntry));
+    }
+
+    if (systemglobal.LogServer) {
+            remoteLogger = true
+            connectToWebSocket('ws://' + systemglobal.LogServer);
+            sendLog('Init', `Init : Forwarding logs to Graylog Server 1`, 'debug');
+            console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][Init] Forwarding logs to Othinus Server - ${facility}`.gray);
+    }
+    function flushUnsentLogs() {
+        if (logServerisConnected) {
+            for (const logId in unsentLogs) {
+                logServerConn.send(JSON.stringify(unsentLogs[logId]));
+            }
+        }
+    }
+    function generateLogId() {
+        // Increment rolling index and reset if it exceeds 9999
+        rollingIndex = (rollingIndex + 1) % 10000;
+        return `${Date.now()}-${rollingIndex}`;
+    }
+
+    module.printLine = async function printLine(proccess, text, level, object, object2, no_ack = false) {
         let logObject = {}
         let logClient = "Unknown"
         if (proccess) {
@@ -80,36 +128,36 @@ module.exports = function (facility, options) {
             }
         }
         if (level === "warn" || level === "warning") {
-            if (remoteLogging1) { logger1.warning(logString, logObject) }
-            if (remoteLogging2) { logger2.warning(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'warning', logObject);
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgYellow)
             if (!text.toLowerCase().includes('block') && systemglobal.log_objects) {
                 console.error(logObject)
             }
         } else if (level === "error" || level === "err") {
-            if (remoteLogging1) { logger1.error(logString, logObject) }
-            if (remoteLogging2) { logger2.error(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'error', logObject);
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgRed)
             if (object)
                 console.error(object)
             if (object2)
                 console.error(object2)
         } else if (level === "critical" || level === "crit") {
-            if (remoteLogging1) { logger1.critical(logString, logObject) }
-            if (remoteLogging2) { logger2.critical(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'critical', logObject);
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.bgMagenta)
             if (object)
                 console.error(object)
             if (object2)
                 console.error(object2)
         } else if (level === "alert") {
-            if (remoteLogging1) { logger1.alert(logString, logObject) }
-            if (remoteLogging2) { logger2.alert(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'alert', logObject);
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.red)
             console.log(logObject)
         } else if (level === "emergency") {
-            if (remoteLogging1) { logger1.emergency(logString, logObject) }
-            if (remoteLogging2) { logger2.emergency(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'emergency', logObject);
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.bgMagenta)
             if (object)
                 console.error(object)
@@ -120,15 +168,13 @@ module.exports = function (facility, options) {
             })
         } else if (level === "notice") {
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.green)
-            if (remoteLogging1) { logger1.notice(logString, logObject) } else if (systemglobal.log_objects) { console.log(logObject) }
-            if (remoteLogging2) { logger2.notice(logString, logObject) }
-        } else if (level === "alert") {
-            console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.green)
-            if (remoteLogging1) { logger1.alert(logString, logObject) } else if (systemglobal.log_objects) { console.log(logObject) }
-            if (remoteLogging2) { logger2.alert(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'notice', logObject);
+            if (systemglobal.log_objects) { console.log(logObject) }
         } else if (level === "debug") {
-            if (remoteLogging1) { logger1.debug(logString, logObject) } else if (systemglobal.log_objects) { console.log(logObject) }
-            if (remoteLogging2) { logger2.debug(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'debug', logObject);
+            if (systemglobal.log_objects) { console.log(logObject) }
             if (text.includes("New Message: ") || text.includes("Reaction Added: ")) {
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgCyan)
             } else if (text.includes('Message Deleted: ') || text.includes('Reaction Removed: ')) {
@@ -141,8 +187,9 @@ module.exports = function (facility, options) {
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.gray)
             }
         } else if (level === "info") {
-            if (remoteLogging1) { logger1.info(logString, logObject) } else if (systemglobal.log_objects) { console.log(logObject) }
-            if (remoteLogging2) { logger2.info(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'info', logObject);
+            if (systemglobal.log_objects) { console.log(logObject) }
             if (text.includes("Sent message to ") || text.includes("Connected to Kanmi Exchange as ")) {
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.gray)
             } else if (text.includes('New Media Tweet in')) {
@@ -153,8 +200,9 @@ module.exports = function (facility, options) {
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.cyan.bgBlack)
             }
         } else {
-            if (remoteLogging1) { logger1.error(logString, logObject) } else if (systemglobal.log_objects) { console.log(logObject) }
-            if (remoteLogging2) { logger2.error(logString, logObject) }
+            if (remoteLogger)
+                sendLog(logObject.process, logString, 'debug', logObject);
+            if (systemglobal.log_objects) { console.log(logObject) }
             console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`)
         }
     }
@@ -162,8 +210,8 @@ module.exports = function (facility, options) {
     process.on('uncaughtException', function(err) {
         console.log(err)
         console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][uncaughtException] ${err.message}`.bgRed);
-        if (remoteLogging1) { logger1.critical(`uncaughtException : ${err.message}`, { process: 'Init' }); }
-        if (remoteLogging2) { logger2.critical(`uncaughtException : ${err.message}`, { process: 'Init' }); }
+        if (remoteLogger)
+            sendLog('Node', `uncaughtException : ${err.message}`, 'critical');
     });
 
     return module;

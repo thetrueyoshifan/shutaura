@@ -70,7 +70,8 @@
     "tough-cookie": "^5.0.0",
     "twit": "^2.2.11",
     "tx2": "^1.0.4",
-    "voluptatemnumquam": "^1.4.0"
+    "voluptatemnumquam": "^1.4.0",
+    "ws": "^8.18.0"
   },
   "engines": {
     "node": ">= 14.0.0",

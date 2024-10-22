@@ -4,6 +4,7 @@
 const systemglobal = require('../../config.json');
 const colors = require('colors');
 const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
+const WebSocket = require('ws');
 let logServerConn;
 let logServerisConnected = false;
 let unsentLogs = {};

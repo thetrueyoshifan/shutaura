@@ -181,22 +181,29 @@ module.exports = function (facility, options) {
                 sendLog(logObject.process, logString, 'notice', logObject);
             if (systemglobal.log_objects) { console.log(logObject) }
         } else if (level === "debug") {
-            if (remoteLogger)
-                sendLog(logObject.process, logString, 'debug', logObject);
-            if (systemglobal.log_objects) { console.log(logObject) }
             if (text.includes("New Message: ") || text.includes("Reaction Added: ")) {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'info', logObject, undefined, 'cyan');
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgCyan)
             } else if (text.includes('Message Deleted: ') || text.includes('Reaction Removed: ')) {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'info', logObject, undefined, 'blue');
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgBlue)
             } else if (text.includes('Send Message: ') || text.includes('Status Update: ')) {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'info', logObject, undefined, 'green');
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgGreen)
             } else if (text.includes('Send Package: ')) {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'info', logObject, undefined, 'cyan');
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.black.bgCyan)
             } else {
+                if (remoteLogger)
+                    sendLog(logObject.process, logString, 'debug', logObject);
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.gray)
             }
-        } else if (level === "info") {
             if (systemglobal.log_objects) { console.log(logObject) }
+        } else if (level === "info") {
             if (text.includes("Sent message to ") || text.includes("Connected to Kanmi Exchange as ")) {
                 if (remoteLogger)
                     sendLog(logObject.process, logString, 'info', logObject, undefined, 'gray');
@@ -214,6 +221,7 @@ module.exports = function (facility, options) {
                     sendLog(logObject.process, logString, 'info', logObject);
                 console.log(`[${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}][${proccess}] ${text}`.cyan.bgBlack)
             }
+            if (systemglobal.log_objects) { console.log(logObject) }
         } else {
             if (remoteLogger)
                 sendLog(logObject.process, logString, 'debug', logObject);

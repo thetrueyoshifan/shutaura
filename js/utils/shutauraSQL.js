@@ -85,7 +85,7 @@ module.exports = function (facility, options) {
             // Commit the transaction if all queries succeed
             await sqlPromise.query('COMMIT');
 
-            return { success: true, message: 'Transaction completed successfully' };
+            return { success: true, message: `Transaction completed ${queries.length} queries successfully` };
         } catch (error) {
             // Rollback the transaction in case of any error
             await sqlPromise.query('ROLLBACK');
